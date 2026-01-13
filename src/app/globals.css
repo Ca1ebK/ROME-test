@@ -1,0 +1,139 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --warehouse-black: #0A0A0A;
+    --warehouse-white: #FAFAFA;
+    --warehouse-orange: #FF6B00;
+    --warehouse-orange-dark: #CC5500;
+    --warehouse-success: #22C55E;
+    --warehouse-error: #EF4444;
+  }
+
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  body {
+    @apply bg-warehouse-black text-warehouse-white antialiased;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  /* Prevent text selection on kiosk elements */
+  .kiosk-no-select {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+}
+
+@layer components {
+  /* Large touch-friendly button base */
+  .kiosk-button {
+    @apply flex items-center justify-center 
+           min-h-[4rem] min-w-[4rem] 
+           rounded-kiosk font-semibold
+           transition-all duration-150 ease-out
+           active:scale-95 active:shadow-kiosk-pressed
+           disabled:opacity-50 disabled:cursor-not-allowed
+           select-none touch-manipulation;
+  }
+
+  /* Numeric keypad button */
+  .keypad-button {
+    @apply kiosk-button
+           bg-warehouse-gray-800 text-warehouse-white
+           text-kiosk-xl font-mono
+           hover:bg-warehouse-gray-700
+           active:bg-warehouse-gray-600;
+  }
+
+  /* Primary action button (orange) */
+  .action-button-primary {
+    @apply kiosk-button
+           bg-warehouse-orange text-warehouse-black
+           text-kiosk-lg font-bold
+           hover:bg-warehouse-orange-dark
+           shadow-kiosk;
+  }
+
+  /* Secondary action button */
+  .action-button-secondary {
+    @apply kiosk-button
+           bg-warehouse-gray-800 text-warehouse-white
+           text-kiosk-lg font-semibold
+           hover:bg-warehouse-gray-700
+           border-2 border-warehouse-gray-600;
+  }
+
+  /* Danger action button */
+  .action-button-danger {
+    @apply kiosk-button
+           bg-warehouse-error text-warehouse-white
+           text-kiosk-lg font-bold
+           hover:bg-red-600;
+  }
+
+  /* Success state */
+  .action-button-success {
+    @apply kiosk-button
+           bg-warehouse-success text-warehouse-black
+           text-kiosk-lg font-bold
+           hover:bg-green-600;
+  }
+
+  /* Counter buttons for production log */
+  .counter-button {
+    @apply kiosk-button
+           w-16 h-16 md:w-20 md:h-20
+           text-kiosk-lg font-bold
+           rounded-full;
+  }
+
+  /* PIN display digit */
+  .pin-digit {
+    @apply w-12 h-16 md:w-16 md:h-20
+           flex items-center justify-center
+           bg-warehouse-gray-800 rounded-lg
+           text-kiosk-xl font-mono
+           border-2 border-warehouse-gray-600;
+  }
+
+  .pin-digit-filled {
+    @apply border-warehouse-orange bg-warehouse-gray-700;
+  }
+
+  /* Task row in production log */
+  .task-row {
+    @apply flex items-center justify-between
+           bg-warehouse-gray-800 rounded-kiosk
+           p-4 md:p-6
+           border border-warehouse-gray-700;
+  }
+}
+
+@layer utilities {
+  /* Safe area padding for mobile devices */
+  .safe-area-inset {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Scrollbar styling */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
