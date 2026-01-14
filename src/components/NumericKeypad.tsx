@@ -1,6 +1,7 @@
 "use client";
 
-import { Delete, ArrowRight } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { Delete } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface NumericKeypadProps {
@@ -20,21 +21,64 @@ export function NumericKeypad({
   isLoading = false,
   error = null,
 }: NumericKeypadProps) {
+  const hasAutoSubmitted = useRef(false);
+
   const handleDigitPress = (digit: string) => {
-    if (value.length < maxLength) {
+    if (value.length < maxLength && !isLoading) {
       onChange(value + digit);
     }
   };
 
   const handleBackspace = () => {
-    onChange(value.slice(0, -1));
+    if (!isLoading) {
+      onChange(value.slice(0, -1));
+    }
   };
 
   const handleClear = () => {
-    onChange("");
+    if (!isLoading) {
+      onChange("");
+    }
   };
 
-  const canSubmit = value.length === maxLength && !isLoading;
+  // Keyboard input support
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if loading
+      if (isLoading) return;
+
+      // Number keys (both main keyboard and numpad)
+      if (/^[0-9]$/.test(e.key)) {
+        e.preventDefault();
+        handleDigitPress(e.key);
+      }
+      // Backspace or Delete
+      else if (e.key === "Backspace" || e.key === "Delete") {
+        e.preventDefault();
+        handleBackspace();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [value, isLoading, maxLength]);
+
+  // Auto-submit when PIN is complete
+  useEffect(() => {
+    if (value.length === maxLength && !isLoading && !hasAutoSubmitted.current) {
+      hasAutoSubmitted.current = true;
+      // Small delay for visual feedback
+      const timer = setTimeout(() => {
+        onSubmit();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+    
+    // Reset auto-submit flag when value changes (e.g., after error clears PIN)
+    if (value.length < maxLength) {
+      hasAutoSubmitted.current = false;
+    }
+  }, [value, maxLength, isLoading, onSubmit]);
 
   return (
     <div className="flex flex-col items-center gap-6 w-full max-w-md mx-auto">
@@ -48,8 +92,8 @@ export function NumericKeypad({
             <div
               key={i}
               className={cn(
-                "pin-digit",
-                i < value.length && "pin-digit-filled"
+                "pin-digit transition-all duration-150",
+                i < value.length && "pin-digit-filled scale-105"
               )}
             >
               {i < value.length ? (
@@ -63,10 +107,18 @@ export function NumericKeypad({
         
         {/* Error Message */}
         {error && (
-          <div className="mt-2 px-4 py-2 bg-warehouse-error/20 border border-warehouse-error rounded-lg">
+          <div className="mt-2 px-4 py-2 bg-warehouse-error/20 border border-warehouse-error rounded-lg animate-shake">
             <p className="text-warehouse-error text-kiosk-sm font-medium text-center">
               {error}
             </p>
+          </div>
+        )}
+
+        {/* Loading Indicator */}
+        {isLoading && (
+          <div className="mt-2 flex items-center gap-2 text-warehouse-gray-400">
+            <div className="w-5 h-5 border-2 border-warehouse-gray-600 border-t-warehouse-orange rounded-full animate-spin" />
+            <span className="text-kiosk-sm">Verifying...</span>
           </div>
         )}
       </div>
@@ -117,32 +169,10 @@ export function NumericKeypad({
         </button>
       </div>
 
-      {/* Submit Button */}
-      <button
-        type="button"
-        onClick={onSubmit}
-        disabled={!canSubmit}
-        className={cn(
-          "w-full py-5 rounded-kiosk text-kiosk-lg font-bold",
-          "flex items-center justify-center gap-3",
-          "transition-all duration-200",
-          canSubmit
-            ? "bg-warehouse-orange text-warehouse-black hover:bg-warehouse-orange-dark shadow-kiosk active:scale-98"
-            : "bg-warehouse-gray-800 text-warehouse-gray-500 cursor-not-allowed"
-        )}
-      >
-        {isLoading ? (
-          <div className="flex items-center gap-3">
-            <div className="w-6 h-6 border-3 border-warehouse-black/30 border-t-warehouse-black rounded-full animate-spin" />
-            <span>Verifying...</span>
-          </div>
-        ) : (
-          <>
-            <span>Continue</span>
-            <ArrowRight className="w-7 h-7" />
-          </>
-        )}
-      </button>
+      {/* Keyboard hint */}
+      <p className="text-warehouse-gray-600 text-sm text-center">
+        You can also type with your keyboard
+      </p>
     </div>
   );
 }

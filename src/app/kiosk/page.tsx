@@ -44,6 +44,16 @@ export default function KioskPage() {
   const [retryAction, setRetryAction] = useState<(() => void) | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
 
+  // Reset to PIN screen (defined first so other handlers can use it)
+  const handleReset = useCallback(() => {
+    setPin("");
+    setPinError(null);
+    setWorker(null);
+    setScreen("pin");
+    setErrorMessage("");
+    setRetryAction(null);
+  }, []);
+
   // Handle PIN submission
   const handlePinSubmit = useCallback(async () => {
     if (pin.length !== 6) return;
@@ -96,12 +106,15 @@ export default function KioskPage() {
         throw new Error(result.error);
       }
       
-      setWorker((prev) => prev ? { ...prev, isClockedIn: true } : null);
-      
       toast.success("Clocked In!", {
         description: `Welcome, ${worker.name}. Your shift has started.`,
         duration: 4000,
       });
+      
+      // Reset to PIN screen so another worker can use the kiosk
+      setTimeout(() => {
+        handleReset();
+      }, 1500);
       
     } catch (error) {
       console.error("Clock in error:", error);
@@ -112,7 +125,7 @@ export default function KioskPage() {
       setIsActionLoading(false);
       setLoadingAction(null);
     }
-  }, [worker]);
+  }, [worker, handleReset]);
 
   // Handle Clock Out
   const handleClockOut = useCallback(async () => {
@@ -136,7 +149,7 @@ export default function KioskPage() {
       // Reset to PIN screen after clock out
       setTimeout(() => {
         handleReset();
-      }, 2000);
+      }, 1500);
       
     } catch (error) {
       console.error("Clock out error:", error);
@@ -147,7 +160,7 @@ export default function KioskPage() {
       setIsActionLoading(false);
       setLoadingAction(null);
     }
-  }, [worker]);
+  }, [worker, handleReset]);
 
   // Handle Production Log Submission
   const handleProductionSubmit = useCallback(async (entries: ProductionEntry[]) => {
@@ -169,8 +182,10 @@ export default function KioskPage() {
         duration: 4000,
       });
       
-      // Go back to actions screen
-      setScreen("actions");
+      // Reset to PIN screen after logging production
+      setTimeout(() => {
+        handleReset();
+      }, 1500);
       
     } catch (error) {
       console.error("Production log error:", error);
@@ -180,21 +195,11 @@ export default function KioskPage() {
     } finally {
       setIsActionLoading(false);
     }
-  }, [worker]);
+  }, [worker, handleReset]);
 
   // Handle navigating to production log
   const handleLogProduction = useCallback(() => {
     setScreen("production");
-  }, []);
-
-  // Reset to PIN screen
-  const handleReset = useCallback(() => {
-    setPin("");
-    setPinError(null);
-    setWorker(null);
-    setScreen("pin");
-    setErrorMessage("");
-    setRetryAction(null);
   }, []);
 
   // Back to actions from production
@@ -241,7 +246,7 @@ export default function KioskPage() {
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col justify-center py-8 px-4 safe-area-inset">
+      <div className="flex-1 flex flex-col justify-center py-8 px-4 mb-8 safe-area-inset">
         {screen === "pin" && (
           <NumericKeypad
             value={pin}
@@ -285,7 +290,7 @@ export default function KioskPage() {
       </div>
 
       {/* Footer */}
-      <footer className="py-4 text-center border-t border-warehouse-gray-800">
+      <footer className="py-6 mt-auto text-center border-t border-warehouse-gray-800">
         <p className="text-xs text-warehouse-gray-600">
           {new Date().toLocaleDateString("en-US", {
             weekday: "long",
