@@ -4,47 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Clock, CheckCircle, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { TimeOffRequest, TimeOffType, RequestStatus } from "@/types/database";
-
-// Placeholder data for now - will connect to Supabase later
-const MOCK_REQUESTS: (TimeOffRequest & { worker?: { full_name: string } })[] = [
-  {
-    id: "1",
-    worker_id: "demo-1",
-    type: "vacation",
-    start_date: "2026-02-14",
-    end_date: "2026-02-16",
-    paid_hours: 24,
-    unpaid_hours: 0,
-    is_excused: true,
-    is_planned: true,
-    comments: "Family vacation",
-    status: "pending",
-    reviewed_by: null,
-    reviewed_at: null,
-    denial_reason: null,
-    created_at: "2026-01-20T10:00:00Z",
-    updated_at: "2026-01-20T10:00:00Z",
-  },
-  {
-    id: "2",
-    worker_id: "demo-1",
-    type: "sick",
-    start_date: "2026-01-10",
-    end_date: "2026-01-10",
-    paid_hours: 8,
-    unpaid_hours: 0,
-    is_excused: true,
-    is_planned: false,
-    comments: null,
-    status: "approved",
-    reviewed_by: "demo-3",
-    reviewed_at: "2026-01-10T14:00:00Z",
-    denial_reason: null,
-    created_at: "2026-01-10T08:00:00Z",
-    updated_at: "2026-01-10T14:00:00Z",
-  },
-];
+import { getMyTimeOffRequests, type TimeOffRequestData } from "@/lib/timeoff";
+import type { TimeOffType, RequestStatus } from "@/types/database";
 
 const TYPE_LABELS: Record<TimeOffType, string> = {
   vacation: "Vacation",
@@ -62,14 +23,27 @@ const STATUS_CONFIG: Record<RequestStatus, { icon: typeof Clock; color: string; 
 
 export default function TimeOffPage() {
   const router = useRouter();
-  const [requests, setRequests] = useState<typeof MOCK_REQUESTS>([]);
+  const [requests, setRequests] = useState<TimeOffRequestData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Fetch from Supabase
-    setRequests(MOCK_REQUESTS);
-    setIsLoading(false);
-  }, []);
+    const loadRequests = async () => {
+      const stored = localStorage.getItem("rome_session");
+      if (!stored) {
+        router.push("/login");
+        return;
+      }
+      const session = JSON.parse(stored);
+      
+      const result = await getMyTimeOffRequests(session.workerId);
+      if (result.success && result.requests) {
+        setRequests(result.requests);
+      }
+      setIsLoading(false);
+    };
+    
+    loadRequests();
+  }, [router]);
 
   const formatDateRange = (start: string, end: string) => {
     const startDate = new Date(start);
@@ -189,7 +163,7 @@ export default function TimeOffPage() {
                         {formatDateRange(request.start_date, request.end_date)} ({getDayCount(request.start_date, request.end_date)})
                       </p>
                       <p className={cn("text-xs mt-1", STATUS_CONFIG[request.status].color)}>
-                        {request.status === "approved" && "Approved"}
+                        {request.status === "approved" && `Approved${request.reviewer_name ? ` by ${request.reviewer_name}` : ""}`}
                         {request.status === "denied" && (request.denial_reason || "Denied")}
                       </p>
                     </div>

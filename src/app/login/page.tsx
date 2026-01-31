@@ -18,6 +18,7 @@ interface WorkerData {
   id: string;
   full_name: string;
   email: string;
+  role: string;
 }
 
 export default function LoginPage() {
@@ -71,6 +72,7 @@ export default function LoginPage() {
         id: result.worker.id,
         full_name: result.worker.full_name,
         email: result.worker.email || "",
+        role: result.worker.role || "worker",
       });
       
       // Send verification code
@@ -123,6 +125,7 @@ export default function LoginPage() {
         workerId: worker.id,
         workerName: worker.full_name,
         email: worker.email,
+        role: worker.role,
         expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
       }));
       
@@ -130,8 +133,12 @@ export default function LoginPage() {
         description: `Logged in as ${worker.full_name}`,
       });
       
-      // Redirect to dashboard
-      router.push("/dashboard");
+      // Redirect based on role
+      if (worker.role === "manager" || worker.role === "supervisor") {
+        router.push("/manager");
+      } else {
+        router.push("/dashboard");
+      }
       
     } catch (error) {
       console.error("Verification error:", error);

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Calendar, Check } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { submitTimeOffRequest } from "@/lib/timeoff";
 import type { TimeOffType } from "@/types/database";
 
 const TIME_OFF_TYPES: { value: TimeOffType; label: string }[] = [
@@ -43,19 +44,20 @@ export default function NewTimeOffRequestPage() {
       }
       const session = JSON.parse(stored);
 
-      // TODO: Submit to Supabase
-      // For now, just simulate success
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      console.log("Time off request:", {
-        worker_id: session.workerId,
-        type,
+      // Submit to Supabase/demo
+      const result = await submitTimeOffRequest(session.workerId, {
+        type: type!,
         start_date: startDate,
         end_date: endDate,
         paid_hours: parseFloat(paidHours) || 0,
         unpaid_hours: parseFloat(unpaidHours) || 0,
-        comments: comments || null,
+        comments: comments || undefined,
       });
+
+      if (!result.success) {
+        toast.error(result.error || "Failed to submit request");
+        return;
+      }
 
       setIsSuccess(true);
       
