@@ -2,10 +2,19 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Clock, CheckCircle, XCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CircularProgress from "@mui/material/CircularProgress";
+import Add from "@mui/icons-material/Add";
+import AccessTime from "@mui/icons-material/AccessTime";
+import CheckCircleOutline from "@mui/icons-material/CheckCircleOutline";
+import CancelOutlined from "@mui/icons-material/CancelOutlined";
 import { getMyTimeOffRequests, type TimeOffRequestData } from "@/lib/timeoff";
 import type { TimeOffType, RequestStatus } from "@/types/database";
+import { m3Tokens } from "@/theme";
 
 const TYPE_LABELS: Record<TimeOffType, string> = {
   vacation: "Vacation",
@@ -15,10 +24,10 @@ const TYPE_LABELS: Record<TimeOffType, string> = {
   unpaid: "Unpaid",
 };
 
-const STATUS_CONFIG: Record<RequestStatus, { icon: typeof Clock; color: string; label: string }> = {
-  pending: { icon: Clock, color: "text-yellow-500", label: "Pending" },
-  approved: { icon: CheckCircle, color: "text-warehouse-success", label: "Approved" },
-  denied: { icon: XCircle, color: "text-warehouse-error", label: "Denied" },
+const STATUS_CONFIG: Record<RequestStatus, { icon: typeof AccessTime; color: string; label: string }> = {
+  pending: { icon: AccessTime, color: m3Tokens.colors.warning.main, label: "Pending" },
+  approved: { icon: CheckCircleOutline, color: m3Tokens.colors.success.main, label: "Approved" },
+  denied: { icon: CancelOutlined, color: m3Tokens.colors.error.main, label: "Denied" },
 };
 
 export default function TimeOffPage() {
@@ -34,14 +43,14 @@ export default function TimeOffPage() {
         return;
       }
       const session = JSON.parse(stored);
-      
+
       const result = await getMyTimeOffRequests(session.workerId);
       if (result.success && result.requests) {
         setRequests(result.requests);
       }
       setIsLoading(false);
     };
-    
+
     loadRequests();
   }, [router]);
 
@@ -49,11 +58,11 @@ export default function TimeOffPage() {
     const startDate = new Date(start);
     const endDate = new Date(end);
     const startStr = startDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-    
+
     if (start === end) {
       return `${startStr}, ${startDate.getFullYear()}`;
     }
-    
+
     const endStr = endDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
     return `${startStr}-${endStr}, ${endDate.getFullYear()}`;
   };
@@ -71,109 +80,117 @@ export default function TimeOffPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-3 border-warehouse-gray-600 border-t-warehouse-orange rounded-full animate-spin" />
-      </div>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: 256 }}>
+        <CircularProgress />
+      </Box>
     );
   }
 
   return (
-    <div className="p-4 space-y-6">
+    <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 3 }}>
       {/* Request Button */}
-      <button
+      <Button
+        variant="contained"
+        size="large"
+        startIcon={<Add />}
         onClick={() => router.push("/dashboard/time-off/new")}
-        className={cn(
-          "w-full flex items-center justify-center gap-2 py-4 rounded-xl",
-          "bg-warehouse-orange text-warehouse-black font-bold text-lg",
-          "hover:bg-warehouse-orange-dark transition-colors",
-          "active:scale-98"
-        )}
+        sx={{
+          py: 1.5,
+          fontSize: "1rem",
+          fontWeight: 600,
+          backgroundColor: m3Tokens.colors.primary.main,
+          "&:hover": {
+            backgroundColor: m3Tokens.colors.primary.dark,
+          },
+        }}
       >
-        <Plus className="w-6 h-6" />
         Request Time Off
-      </button>
+      </Button>
 
       {/* Pending Requests */}
       {pendingRequests.length > 0 && (
-        <div>
-          <h2 className="text-warehouse-gray-400 text-sm font-medium uppercase tracking-wide mb-3">
+        <Box>
+          <Typography
+            variant="overline"
+            sx={{ color: m3Tokens.colors.onSurface.variant, letterSpacing: 1, mb: 1.5, display: "block" }}
+          >
             Pending
-          </h2>
-          <div className="space-y-3">
+          </Typography>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
             {pendingRequests.map((request) => {
               const StatusIcon = STATUS_CONFIG[request.status].icon;
               return (
-                <div
-                  key={request.id}
-                  className="bg-warehouse-gray-800 rounded-xl p-4 border border-warehouse-gray-700"
-                >
-                  <div className="flex items-start gap-3">
-                    <StatusIcon className={cn("w-5 h-5 mt-0.5", STATUS_CONFIG[request.status].color)} />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-warehouse-white font-semibold">
+                <Card key={request.id}>
+                  <CardContent sx={{ py: 2, "&:last-child": { pb: 2 } }}>
+                    <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+                      <StatusIcon sx={{ color: STATUS_CONFIG[request.status].color, mt: 0.25 }} />
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="subtitle2" fontWeight={600}>
                           {TYPE_LABELS[request.type]}
-                        </span>
-                      </div>
-                      <p className="text-warehouse-gray-400 text-sm mt-1">
-                        {formatDateRange(request.start_date, request.end_date)} ({getDayCount(request.start_date, request.end_date)})
-                      </p>
-                      <p className="text-warehouse-gray-500 text-xs mt-1">
-                        Submitted {new Date(request.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                      </p>
-                      <p className="text-yellow-500 text-xs mt-1">
-                        Awaiting manager approval
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                          {formatDateRange(request.start_date, request.end_date)} ({getDayCount(request.start_date, request.end_date)})
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+                          Submitted {new Date(request.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: m3Tokens.colors.warning.main, display: "block", mt: 0.5 }}>
+                          Awaiting manager approval
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
               );
             })}
-          </div>
-        </div>
+          </Box>
+        </Box>
       )}
 
       {/* Past Requests */}
-      <div>
-        <h2 className="text-warehouse-gray-400 text-sm font-medium uppercase tracking-wide mb-3">
+      <Box>
+        <Typography
+          variant="overline"
+          sx={{ color: m3Tokens.colors.onSurface.variant, letterSpacing: 1, mb: 1.5, display: "block" }}
+        >
           Past Requests
-        </h2>
+        </Typography>
         {pastRequests.length === 0 ? (
-          <p className="text-warehouse-gray-500 text-sm text-center py-8">
+          <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ py: 4 }}>
             No past requests
-          </p>
+          </Typography>
         ) : (
-          <div className="space-y-3">
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
             {pastRequests.map((request) => {
               const StatusIcon = STATUS_CONFIG[request.status].icon;
               return (
-                <div
-                  key={request.id}
-                  className="bg-warehouse-gray-800 rounded-xl p-4 border border-warehouse-gray-700"
-                >
-                  <div className="flex items-start gap-3">
-                    <StatusIcon className={cn("w-5 h-5 mt-0.5", STATUS_CONFIG[request.status].color)} />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-warehouse-white font-semibold">
+                <Card key={request.id}>
+                  <CardContent sx={{ py: 2, "&:last-child": { pb: 2 } }}>
+                    <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+                      <StatusIcon sx={{ color: STATUS_CONFIG[request.status].color, mt: 0.25 }} />
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="subtitle2" fontWeight={600}>
                           {TYPE_LABELS[request.type]}
-                        </span>
-                      </div>
-                      <p className="text-warehouse-gray-400 text-sm mt-1">
-                        {formatDateRange(request.start_date, request.end_date)} ({getDayCount(request.start_date, request.end_date)})
-                      </p>
-                      <p className={cn("text-xs mt-1", STATUS_CONFIG[request.status].color)}>
-                        {request.status === "approved" && `Approved${request.reviewer_name ? ` by ${request.reviewer_name}` : ""}`}
-                        {request.status === "denied" && (request.denial_reason || "Denied")}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                          {formatDateRange(request.start_date, request.end_date)} ({getDayCount(request.start_date, request.end_date)})
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{ color: STATUS_CONFIG[request.status].color, display: "block", mt: 0.5 }}
+                        >
+                          {request.status === "approved" && `Approved${request.reviewer_name ? ` by ${request.reviewer_name}` : ""}`}
+                          {request.status === "denied" && (request.denial_reason || "Denied")}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
               );
             })}
-          </div>
+          </Box>
         )}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }

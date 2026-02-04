@@ -2,9 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Download } from "lucide-react";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import IconButton from "@mui/material/IconButton";
+import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
+import CircularProgress from "@mui/material/CircularProgress";
+import ArrowBack from "@mui/icons-material/ArrowBack";
+import FileDownloadOutlined from "@mui/icons-material/FileDownloadOutlined";
 import { getPunchHistory, formatDuration, type PunchPair } from "@/lib/supabase";
-import { cn } from "@/lib/utils";
+import { m3Tokens } from "@/theme";
 
 export default function PunchHistoryPage() {
   const router = useRouter();
@@ -15,29 +24,28 @@ export default function PunchHistoryPage() {
   useEffect(() => {
     const loadHistory = async () => {
       setIsLoading(true);
-      
+
       const stored = localStorage.getItem("rome_session");
       if (!stored) {
         router.push("/login");
         return;
       }
-      
+
       const session = JSON.parse(stored);
       const days = filter === "week" ? 7 : filter === "month" ? 30 : 90;
-      
+
       const result = await getPunchHistory(session.workerId, days);
-      
+
       if (result.success && result.history) {
         setPunches(result.history);
       }
-      
+
       setIsLoading(false);
     };
 
     loadHistory();
   }, [filter, router]);
 
-  // Format time for display
   const formatTime = (timestamp: string | null) => {
     if (!timestamp) return "--:--";
     return new Date(timestamp).toLocaleTimeString("en-US", {
@@ -47,145 +55,191 @@ export default function PunchHistoryPage() {
     });
   };
 
-  // Group punches by month
   const groupByMonth = (punches: PunchPair[]) => {
     const groups: Record<string, PunchPair[]> = {};
-    
+
     for (const punch of punches) {
       const date = new Date(punch.date);
       const monthKey = date.toLocaleDateString("en-US", { year: "numeric", month: "long" });
-      
+
       if (!groups[monthKey]) {
         groups[monthKey] = [];
       }
       groups[monthKey].push(punch);
     }
-    
+
     return groups;
   };
 
   const grouped = groupByMonth(punches);
-  
-  // Calculate totals
   const totalMs = punches.reduce((sum, p) => sum + p.totalMs, 0);
 
+  const filterOptions = [
+    { value: "week", label: "This Week" },
+    { value: "month", label: "This Month" },
+    { value: "all", label: "All Time" },
+  ] as const;
+
   return (
-    <div className="p-4 space-y-4">
+    <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => router.back()}
-            className="p-2 text-warehouse-gray-400 hover:text-warehouse-white"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-xl font-bold text-warehouse-white">
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <IconButton onClick={() => router.back()} sx={{ color: m3Tokens.colors.onSurface.variant }}>
+            <ArrowBack />
+          </IconButton>
+          <Typography variant="h6" fontWeight={600}>
             Punch History
-          </h1>
-        </div>
-        
-        <button className="flex items-center gap-1 text-warehouse-orange text-sm hover:underline">
-          <Download className="w-4 h-4" />
+          </Typography>
+        </Box>
+
+        <Button
+          variant="text"
+          size="small"
+          startIcon={<FileDownloadOutlined />}
+          sx={{ color: m3Tokens.colors.primary.main }}
+        >
           Export
-        </button>
-      </div>
+        </Button>
+      </Box>
 
       {/* Filter */}
-      <div className="flex gap-2">
-        {(["week", "month", "all"] as const).map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={cn(
-              "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-              filter === f
-                ? "bg-warehouse-orange text-warehouse-black"
-                : "bg-warehouse-gray-800 text-warehouse-gray-400 hover:text-warehouse-white"
-            )}
-          >
-            {f === "week" ? "This Week" : f === "month" ? "This Month" : "All Time"}
-          </button>
+      <Box sx={{ display: "flex", gap: 1 }}>
+        {filterOptions.map((option) => (
+          <Chip
+            key={option.value}
+            label={option.label}
+            onClick={() => setFilter(option.value)}
+            sx={{
+              backgroundColor:
+                filter === option.value
+                  ? m3Tokens.colors.primary.main
+                  : m3Tokens.colors.surface.containerHigh,
+              color:
+                filter === option.value
+                  ? m3Tokens.colors.primary.contrastText
+                  : m3Tokens.colors.onSurface.variant,
+              fontWeight: 500,
+              "&:hover": {
+                backgroundColor:
+                  filter === option.value
+                    ? m3Tokens.colors.primary.dark
+                    : m3Tokens.colors.surface.containerHighest,
+              },
+            }}
+          />
         ))}
-      </div>
+      </Box>
 
       {/* Content */}
       {isLoading ? (
-        <div className="flex items-center justify-center h-48">
-          <div className="w-8 h-8 border-3 border-warehouse-gray-600 border-t-warehouse-orange rounded-full animate-spin" />
-        </div>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: 192 }}>
+          <CircularProgress />
+        </Box>
       ) : punches.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-warehouse-gray-500">No punch history found</p>
-        </div>
+        <Box sx={{ textAlign: "center", py: 6 }}>
+          <Typography color="text.secondary">No punch history found</Typography>
+        </Box>
       ) : (
         <>
           {Object.entries(grouped).map(([month, monthPunches]) => (
-            <div key={month}>
-              <h2 className="text-warehouse-gray-400 text-sm font-medium uppercase tracking-wide mb-3">
+            <Box key={month}>
+              <Typography
+                variant="overline"
+                sx={{
+                  color: m3Tokens.colors.onSurface.variant,
+                  letterSpacing: 1,
+                  mb: 1.5,
+                  display: "block",
+                }}
+              >
                 {month}
-              </h2>
-              
-              <div className="space-y-2">
+              </Typography>
+
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                 {monthPunches.map((punch) => {
                   const date = new Date(punch.date);
                   const dayName = date.toLocaleDateString("en-US", { weekday: "short" });
                   const dayNum = date.getDate();
-                  
+
                   return (
-                    <div
-                      key={punch.date}
-                      className="bg-warehouse-gray-800 rounded-xl p-4 border border-warehouse-gray-700"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="text-center">
-                            <div className="text-warehouse-gray-500 text-xs uppercase">
-                              {dayName}
-                            </div>
-                            <div className="text-warehouse-white text-lg font-bold">
-                              {dayNum}
-                            </div>
-                          </div>
-                          
-                          <div className="border-l border-warehouse-gray-700 pl-4">
-                            <div className="text-warehouse-white text-sm">
-                              <span className="text-warehouse-success">IN</span>{" "}
-                              {formatTime(punch.clockIn)}
-                            </div>
-                            <div className="text-warehouse-white text-sm">
-                              <span className="text-warehouse-error">OUT</span>{" "}
-                              {formatTime(punch.clockOut)}
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="text-right">
-                          <div className="text-warehouse-white font-semibold">
+                    <Card key={punch.date}>
+                      <CardContent sx={{ py: 2, "&:last-child": { pb: 2 } }}>
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                            <Box sx={{ textAlign: "center", minWidth: 40 }}>
+                              <Typography variant="caption" color="text.secondary" sx={{ textTransform: "uppercase" }}>
+                                {dayName}
+                              </Typography>
+                              <Typography variant="h6" fontWeight={700}>
+                                {dayNum}
+                              </Typography>
+                            </Box>
+
+                            <Box sx={{ borderLeft: `1px solid ${m3Tokens.colors.outline.variant}`, pl: 2 }}>
+                              <Typography variant="body2">
+                                <Chip
+                                  label="IN"
+                                  size="small"
+                                  sx={{
+                                    height: 18,
+                                    fontSize: "0.625rem",
+                                    mr: 0.5,
+                                    bgcolor: `${m3Tokens.colors.success.main}20`,
+                                    color: m3Tokens.colors.success.main,
+                                  }}
+                                />
+                                {formatTime(punch.clockIn)}
+                              </Typography>
+                              <Typography variant="body2">
+                                <Chip
+                                  label="OUT"
+                                  size="small"
+                                  sx={{
+                                    height: 18,
+                                    fontSize: "0.625rem",
+                                    mr: 0.5,
+                                    bgcolor: `${m3Tokens.colors.error.main}20`,
+                                    color: m3Tokens.colors.error.main,
+                                  }}
+                                />
+                                {formatTime(punch.clockOut)}
+                              </Typography>
+                            </Box>
+                          </Box>
+
+                          <Typography variant="subtitle2" fontWeight={600}>
                             {punch.totalMs > 0 ? formatDuration(punch.totalMs) : "--"}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                          </Typography>
+                        </Box>
+                      </CardContent>
+                    </Card>
                   );
                 })}
-              </div>
-            </div>
+              </Box>
+            </Box>
           ))}
 
           {/* Total */}
-          <div className="bg-warehouse-gray-800 rounded-xl p-4 border border-warehouse-orange/30 mt-6">
-            <div className="flex items-center justify-between">
-              <span className="text-warehouse-gray-400 font-medium">
-                {filter === "week" ? "Week" : filter === "month" ? "Month" : "Period"} Total
-              </span>
-              <span className="text-warehouse-orange text-xl font-bold">
-                {formatDuration(totalMs)}
-              </span>
-            </div>
-          </div>
+          <Card
+            sx={{
+              mt: 2,
+              border: `1px solid ${m3Tokens.colors.primary.main}30`,
+            }}
+          >
+            <CardContent sx={{ py: 2, "&:last-child": { pb: 2 } }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Typography variant="body1" color="text.secondary" fontWeight={500}>
+                  {filter === "week" ? "Week" : filter === "month" ? "Month" : "Period"} Total
+                </Typography>
+                <Typography variant="h6" sx={{ color: m3Tokens.colors.primary.main, fontWeight: 700 }}>
+                  {formatDuration(totalMs)}
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
         </>
       )}
-    </div>
+    </Box>
   );
 }

@@ -2,11 +2,22 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Calendar, Check } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import TextField from "@mui/material/TextField";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import CircularProgress from "@mui/material/CircularProgress";
+import Avatar from "@mui/material/Avatar";
+import ArrowBack from "@mui/icons-material/ArrowBack";
+import Check from "@mui/icons-material/Check";
 import { submitTimeOffRequest } from "@/lib/timeoff";
+import { DateRangePicker, HoursSlider } from "@/components";
 import type { TimeOffType } from "@/types/database";
+import { m3Tokens } from "@/theme";
 
 const TIME_OFF_TYPES: { value: TimeOffType; label: string }[] = [
   { value: "vacation", label: "Vacation" },
@@ -18,25 +29,24 @@ const TIME_OFF_TYPES: { value: TimeOffType; label: string }[] = [
 
 export default function NewTimeOffRequestPage() {
   const router = useRouter();
-  
+
   const [type, setType] = useState<TimeOffType | null>(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [paidHours, setPaidHours] = useState("8");
-  const [unpaidHours, setUnpaidHours] = useState("0");
+  const [paidHours, setPaidHours] = useState(8);
+  const [unpaidHours, setUnpaidHours] = useState(0);
   const [comments, setComments] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const isValid = type && startDate && endDate && startDate <= endDate;
+  const isValid = type && startDate && endDate && startDate <= endDate && (paidHours > 0 || unpaidHours > 0);
 
   const handleSubmit = async () => {
     if (!isValid) return;
-    
+
     setIsSubmitting(true);
-    
+
     try {
-      // Get session
       const stored = localStorage.getItem("rome_session");
       if (!stored) {
         router.push("/login");
@@ -44,13 +54,12 @@ export default function NewTimeOffRequestPage() {
       }
       const session = JSON.parse(stored);
 
-      // Submit to Supabase/demo
       const result = await submitTimeOffRequest(session.workerId, {
         type: type!,
         start_date: startDate,
         end_date: endDate,
-        paid_hours: parseFloat(paidHours) || 0,
-        unpaid_hours: parseFloat(unpaidHours) || 0,
+        paid_hours: paidHours,
+        unpaid_hours: unpaidHours,
         comments: comments || undefined,
       });
 
@@ -60,7 +69,6 @@ export default function NewTimeOffRequestPage() {
       }
 
       setIsSuccess(true);
-      
     } catch (error) {
       console.error("Submit error:", error);
       toast.error("Failed to submit request");
@@ -71,198 +79,163 @@ export default function NewTimeOffRequestPage() {
 
   if (isSuccess) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
-        <div className="w-20 h-20 rounded-full bg-warehouse-success/20 flex items-center justify-center mb-6">
-          <Check className="w-10 h-10 text-warehouse-success" />
-        </div>
-        <h2 className="text-2xl font-bold text-warehouse-white mb-2">
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "60vh",
+          p: 2,
+        }}
+      >
+        <Avatar
+          sx={{
+            width: 80,
+            height: 80,
+            bgcolor: `${m3Tokens.colors.success.main}20`,
+            mb: 3,
+          }}
+        >
+          <Check sx={{ fontSize: 40, color: m3Tokens.colors.success.main }} />
+        </Avatar>
+        <Typography variant="h5" fontWeight={600} gutterBottom>
           Request Submitted!
-        </h2>
-        <p className="text-warehouse-gray-400 text-center max-w-sm mb-8">
+        </Typography>
+        <Typography variant="body1" color="text.secondary" textAlign="center" sx={{ maxWidth: 320, mb: 4 }}>
           Your manager will be notified and you&apos;ll receive an email when it&apos;s approved or denied.
-        </p>
-        <button
+        </Typography>
+        <Button
+          variant="outlined"
           onClick={() => router.push("/dashboard/time-off")}
-          className={cn(
-            "px-6 py-3 rounded-xl font-semibold",
-            "bg-warehouse-gray-800 text-warehouse-white",
-            "hover:bg-warehouse-gray-700 transition-colors"
-          )}
+          sx={{
+            borderColor: m3Tokens.colors.outline.variant,
+            color: m3Tokens.colors.onSurface.main,
+          }}
         >
           Back to Time Off
-        </button>
-      </div>
+        </Button>
+      </Box>
     );
   }
 
   return (
-    <div className="p-4 space-y-6">
+    <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 3 }}>
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => router.back()}
-          className="p-2 text-warehouse-gray-400 hover:text-warehouse-white"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <h1 className="text-xl font-bold text-warehouse-white">
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <IconButton onClick={() => router.back()} sx={{ color: m3Tokens.colors.onSurface.variant }}>
+          <ArrowBack />
+        </IconButton>
+        <Typography variant="h6" fontWeight={600}>
           Request Time Off
-        </h1>
-      </div>
+        </Typography>
+      </Box>
 
       {/* Form */}
-      <div className="space-y-5">
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
         {/* Type Selection */}
-        <div>
-          <label className="block text-warehouse-gray-400 text-sm font-medium mb-2">
+        <Box>
+          <Typography variant="body2" color="text.secondary" fontWeight={500} sx={{ mb: 1.5 }}>
             Type of Absence *
-          </label>
-          <div className="flex flex-wrap gap-2">
+          </Typography>
+          <ToggleButtonGroup
+            value={type}
+            exclusive
+            onChange={(_, newType) => newType && setType(newType)}
+            sx={{
+              flexWrap: "wrap",
+              gap: 1,
+              "& .MuiToggleButtonGroup-grouped": {
+                border: `1px solid ${m3Tokens.colors.outline.variant} !important`,
+                borderRadius: `${m3Tokens.shape.full}px !important`,
+                m: 0,
+              },
+            }}
+          >
             {TIME_OFF_TYPES.map((t) => (
-              <button
+              <ToggleButton
                 key={t.value}
-                type="button"
-                onClick={() => setType(t.value)}
-                className={cn(
-                  "px-4 py-2 rounded-lg font-medium text-sm transition-colors",
-                  type === t.value
-                    ? "bg-warehouse-orange text-warehouse-black"
-                    : "bg-warehouse-gray-800 text-warehouse-gray-300 hover:bg-warehouse-gray-700"
-                )}
+                value={t.value}
+                sx={{
+                  px: 2,
+                  py: 1,
+                  textTransform: "none",
+                  fontWeight: 500,
+                }}
               >
                 {t.label}
-              </button>
+              </ToggleButton>
             ))}
-          </div>
-        </div>
+          </ToggleButtonGroup>
+        </Box>
 
         {/* Date Range */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-warehouse-gray-400 text-sm font-medium mb-2">
-              From *
-            </label>
-            <div className="relative">
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => {
-                  setStartDate(e.target.value);
-                  if (!endDate || e.target.value > endDate) {
-                    setEndDate(e.target.value);
-                  }
-                }}
-                className={cn(
-                  "w-full px-4 py-3 rounded-xl",
-                  "bg-warehouse-gray-800 text-warehouse-white",
-                  "border border-warehouse-gray-600",
-                  "focus:border-warehouse-orange focus:outline-none"
-                )}
-              />
-              <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-warehouse-gray-500 pointer-events-none" />
-            </div>
-          </div>
-          <div>
-            <label className="block text-warehouse-gray-400 text-sm font-medium mb-2">
-              To *
-            </label>
-            <div className="relative">
-              <input
-                type="date"
-                value={endDate}
-                min={startDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className={cn(
-                  "w-full px-4 py-3 rounded-xl",
-                  "bg-warehouse-gray-800 text-warehouse-white",
-                  "border border-warehouse-gray-600",
-                  "focus:border-warehouse-orange focus:outline-none"
-                )}
-              />
-              <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-warehouse-gray-500 pointer-events-none" />
-            </div>
-          </div>
-        </div>
+        <Box>
+          <Typography variant="body2" color="text.secondary" fontWeight={500} sx={{ mb: 1.5 }}>
+            Select Dates *
+          </Typography>
+          <DateRangePicker
+            startDate={startDate}
+            endDate={endDate}
+            onStartDateChange={setStartDate}
+            onEndDateChange={setEndDate}
+          />
+        </Box>
 
         {/* Hours */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-warehouse-gray-400 text-sm font-medium mb-2">
-              Paid Hours
-            </label>
-            <input
-              type="number"
-              min="0"
-              step="0.5"
-              value={paidHours}
-              onChange={(e) => setPaidHours(e.target.value)}
-              className={cn(
-                "w-full px-4 py-3 rounded-xl",
-                "bg-warehouse-gray-800 text-warehouse-white",
-                "border border-warehouse-gray-600",
-                "focus:border-warehouse-orange focus:outline-none"
-              )}
-            />
-          </div>
-          <div>
-            <label className="block text-warehouse-gray-400 text-sm font-medium mb-2">
-              Unpaid Hours
-            </label>
-            <input
-              type="number"
-              min="0"
-              step="0.5"
-              value={unpaidHours}
-              onChange={(e) => setUnpaidHours(e.target.value)}
-              className={cn(
-                "w-full px-4 py-3 rounded-xl",
-                "bg-warehouse-gray-800 text-warehouse-white",
-                "border border-warehouse-gray-600",
-                "focus:border-warehouse-orange focus:outline-none"
-              )}
-            />
-          </div>
-        </div>
+        <Box>
+          <Typography variant="body2" color="text.secondary" fontWeight={500} sx={{ mb: 1.5 }}>
+            Hours
+          </Typography>
+          <HoursSlider
+            paidHours={paidHours}
+            unpaidHours={unpaidHours}
+            onPaidHoursChange={setPaidHours}
+            onUnpaidHoursChange={setUnpaidHours}
+            startDate={startDate}
+            endDate={endDate}
+          />
+        </Box>
 
         {/* Comments */}
-        <div>
-          <label className="block text-warehouse-gray-400 text-sm font-medium mb-2">
+        <Box>
+          <Typography variant="body2" color="text.secondary" fontWeight={500} sx={{ mb: 1.5 }}>
             Reason / Comments
-          </label>
-          <textarea
+          </Typography>
+          <TextField
+            multiline
+            rows={3}
             value={comments}
             onChange={(e) => setComments(e.target.value)}
-            rows={3}
             placeholder="Optional"
-            className={cn(
-              "w-full px-4 py-3 rounded-xl resize-none",
-              "bg-warehouse-gray-800 text-warehouse-white",
-              "border border-warehouse-gray-600",
-              "focus:border-warehouse-orange focus:outline-none",
-              "placeholder:text-warehouse-gray-500"
-            )}
+            fullWidth
           />
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       {/* Submit Button */}
-      <button
+      <Button
+        variant="contained"
+        size="large"
         onClick={handleSubmit}
         disabled={!isValid || isSubmitting}
-        className={cn(
-          "w-full py-4 rounded-xl font-bold text-lg transition-all",
-          "flex items-center justify-center gap-2",
-          isValid && !isSubmitting
-            ? "bg-warehouse-success text-warehouse-black hover:bg-green-600"
-            : "bg-warehouse-gray-800 text-warehouse-gray-500 cursor-not-allowed"
-        )}
+        startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : null}
+        sx={{
+          py: 1.5,
+          fontSize: "1rem",
+          fontWeight: 600,
+          backgroundColor: m3Tokens.colors.success.main,
+          "&:hover": {
+            backgroundColor: m3Tokens.colors.success.dark,
+          },
+          "&.Mui-disabled": {
+            backgroundColor: m3Tokens.colors.surface.containerHigh,
+            color: m3Tokens.colors.outline.main,
+          },
+        }}
       >
-        {isSubmitting ? (
-          <div className="w-6 h-6 border-2 border-warehouse-black/30 border-t-warehouse-black rounded-full animate-spin" />
-        ) : (
-          "Submit Request"
-        )}
-      </button>
-    </div>
+        {isSubmitting ? "Submitting..." : "Submit Request"}
+      </Button>
+    </Box>
   );
 }

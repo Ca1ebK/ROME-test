@@ -201,6 +201,41 @@ export type Database = {
           created_at?: string;
         };
       };
+      passkey_credentials: {
+        Row: {
+          id: string;
+          worker_id: string;
+          credential_id: string;
+          public_key: string; // Base64 encoded
+          counter: number;
+          device_name: string | null;
+          transports: string[] | null;
+          last_used_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          worker_id: string;
+          credential_id: string;
+          public_key: string;
+          counter?: number;
+          device_name?: string | null;
+          transports?: string[] | null;
+          last_used_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          worker_id?: string;
+          credential_id?: string;
+          public_key?: string;
+          counter?: number;
+          device_name?: string | null;
+          transports?: string[] | null;
+          last_used_at?: string | null;
+          created_at?: string;
+        };
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -223,6 +258,7 @@ export type ProductionLog = Database["public"]["Tables"]["production_logs"]["Row
 export type Location = Database["public"]["Tables"]["locations"]["Row"];
 export type TimeOffRequest = Database["public"]["Tables"]["time_off_requests"]["Row"];
 export type VerificationCode = Database["public"]["Tables"]["verification_codes"]["Row"];
+export type PasskeyCredential = Database["public"]["Tables"]["passkey_credentials"]["Row"];
 
 // Extended types with relations
 export type WorkerWithLocation = Worker & {

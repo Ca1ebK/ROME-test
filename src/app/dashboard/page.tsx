@@ -1,10 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Clock, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import LinearProgress from "@mui/material/LinearProgress";
+import Button from "@mui/material/Button";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemText from "@mui/material/ListItemText";
+import Chip from "@mui/material/Chip";
+import CircularProgress from "@mui/material/CircularProgress";
+import Link from "@mui/material/Link";
+import ChevronRight from "@mui/icons-material/ChevronRight";
+import AccessTime from "@mui/icons-material/AccessTime";
+import FiberManualRecord from "@mui/icons-material/FiberManualRecord";
 import { getWorkerStatus, getWeeklyHours, getPunchHistory, formatDuration, type PunchPair } from "@/lib/supabase";
-import { cn } from "@/lib/utils";
+import { m3Tokens } from "@/theme";
 
 interface Session {
   workerId: string;
@@ -15,7 +29,7 @@ export default function DashboardHome() {
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Data state
   const [isClockedIn, setIsClockedIn] = useState(false);
   const [clockInTime, setClockInTime] = useState<string | null>(null);
@@ -39,16 +53,13 @@ export default function DashboardHome() {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        // Get clock status
         const status = await getWorkerStatus(session.workerId);
         setIsClockedIn(status.isClockedIn);
         setClockInTime(status.clockInTime);
 
-        // Get weekly hours
         const weekly = await getWeeklyHours(session.workerId);
         setWeeklyHours(weekly);
 
-        // Get recent punches
         const history = await getPunchHistory(session.workerId, 7);
         if (history.success && history.history) {
           setRecentPunches(history.history.slice(0, 5));
@@ -102,153 +113,240 @@ export default function DashboardHome() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-3 border-warehouse-gray-600 border-t-warehouse-orange rounded-full animate-spin" />
-      </div>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: 256 }}>
+        <CircularProgress />
+      </Box>
     );
   }
 
   return (
-    <div className="p-4 space-y-4">
+    <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
       {/* This Week Card */}
-      <div className="bg-warehouse-gray-800 rounded-xl p-4 border border-warehouse-gray-700">
-        <h2 className="text-warehouse-gray-400 text-sm font-medium uppercase tracking-wide mb-3">
-          This Week
-        </h2>
-        
-        <div className="flex items-end gap-2 mb-4">
-          <span className="text-4xl font-bold text-warehouse-white">
-            {weeklyHours.totalHours.toFixed(1)}
-          </span>
-          <span className="text-warehouse-gray-400 text-lg mb-1">hrs</span>
-        </div>
+      <Card>
+        <CardContent>
+          <Typography
+            variant="overline"
+            sx={{ color: m3Tokens.colors.onSurface.variant, letterSpacing: 1 }}
+          >
+            This Week
+          </Typography>
 
-        {/* Progress bar */}
-        <div className="h-3 bg-warehouse-gray-700 rounded-full overflow-hidden mb-4">
-          <div
-            className="h-full bg-warehouse-orange rounded-full transition-all duration-500"
-            style={{ width: `${Math.min((weeklyHours.totalHours / 40) * 100, 100)}%` }}
+          <Box sx={{ display: "flex", alignItems: "baseline", gap: 1, my: 2 }}>
+            <Typography variant="h3" fontWeight={700}>
+              {weeklyHours.totalHours.toFixed(1)}
+            </Typography>
+            <Typography variant="h6" color="text.secondary">
+              hrs
+            </Typography>
+          </Box>
+
+          {/* Progress bar */}
+          <LinearProgress
+            variant="determinate"
+            value={Math.min((weeklyHours.totalHours / 40) * 100, 100)}
+            sx={{
+              height: 12,
+              borderRadius: m3Tokens.shape.full,
+              backgroundColor: m3Tokens.colors.surface.containerHigh,
+              mb: 3,
+              "& .MuiLinearProgress-bar": {
+                borderRadius: m3Tokens.shape.full,
+              },
+            }}
           />
-        </div>
 
-        {/* Daily breakdown */}
-        <div className="flex justify-between">
-          {weekDays.map((day) => (
-            <div key={day} className="text-center">
-              <div className="text-warehouse-gray-500 text-xs mb-1">{day}</div>
-              <div className="text-warehouse-white text-sm font-medium">
-                {weeklyHours.dailyHours[day]?.toFixed(1) || "--"}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+          {/* Daily breakdown */}
+          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+            {weekDays.map((day) => (
+              <Box key={day} sx={{ textAlign: "center" }}>
+                <Typography variant="caption" color="text.secondary">
+                  {day}
+                </Typography>
+                <Typography variant="body2" fontWeight={500}>
+                  {weeklyHours.dailyHours[day]?.toFixed(1) || "--"}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        </CardContent>
+      </Card>
 
       {/* Today Card */}
-      <div className="bg-warehouse-gray-800 rounded-xl p-4 border border-warehouse-gray-700">
-        <h2 className="text-warehouse-gray-400 text-sm font-medium uppercase tracking-wide mb-3">
-          Today
-        </h2>
+      <Card>
+        <CardContent>
+          <Typography
+            variant="overline"
+            sx={{ color: m3Tokens.colors.onSurface.variant, letterSpacing: 1 }}
+          >
+            Today
+          </Typography>
 
-        <div className="space-y-3">
-          {/* Clock In Status */}
-          <div className="flex items-center gap-3">
-            <div className={cn(
-              "w-3 h-3 rounded-full",
-              isClockedIn ? "bg-warehouse-success animate-pulse" : "bg-warehouse-gray-500"
-            )} />
-            <span className="text-warehouse-white">
-              {isClockedIn ? "Clocked In" : "Not clocked in"}
-            </span>
-            <span className="text-warehouse-gray-400 ml-auto">
-              {isClockedIn ? formatTime(clockInTime) : "--:--"}
-            </span>
-          </div>
+          <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 1.5 }}>
+            {/* Clock In Status */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <FiberManualRecord
+                sx={{
+                  fontSize: 12,
+                  color: isClockedIn ? m3Tokens.colors.success.main : m3Tokens.colors.outline.main,
+                  animation: isClockedIn ? "pulse 2s infinite" : "none",
+                  "@keyframes pulse": {
+                    "0%, 100%": { opacity: 1 },
+                    "50%": { opacity: 0.5 },
+                  },
+                }}
+              />
+              <Typography variant="body1">
+                {isClockedIn ? "Clocked In" : "Not clocked in"}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ ml: "auto" }}>
+                {isClockedIn ? formatTime(clockInTime) : "--:--"}
+              </Typography>
+            </Box>
 
-          {/* Clock Out Status */}
-          <div className="flex items-center gap-3">
-            <div className="w-3 h-3 rounded-full bg-warehouse-gray-500" />
-            <span className="text-warehouse-gray-400">
-              {isClockedIn ? "Not yet" : "Clocked Out"}
-            </span>
-            <span className="text-warehouse-gray-400 ml-auto">--:--</span>
-          </div>
+            {/* Clock Out Status */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <FiberManualRecord
+                sx={{ fontSize: 12, color: m3Tokens.colors.outline.main }}
+              />
+              <Typography variant="body1" color="text.secondary">
+                {isClockedIn ? "Not yet" : "Clocked Out"}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ ml: "auto" }}>
+                --:--
+              </Typography>
+            </Box>
 
-          {/* Current session */}
-          {isClockedIn && (
-            <div className="pt-2 border-t border-warehouse-gray-700">
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-warehouse-orange" />
-                <span className="text-warehouse-gray-400">Currently working:</span>
-                <span className="text-warehouse-orange font-semibold ml-auto">
+            {/* Current session */}
+            {isClockedIn && (
+              <Box
+                sx={{
+                  pt: 2,
+                  mt: 1,
+                  borderTop: `1px solid ${m3Tokens.colors.outline.variant}`,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                }}
+              >
+                <AccessTime sx={{ fontSize: 18, color: m3Tokens.colors.primary.main }} />
+                <Typography variant="body2" color="text.secondary">
+                  Currently working:
+                </Typography>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ ml: "auto", color: m3Tokens.colors.primary.main, fontWeight: 600 }}
+                >
                   {getCurrentSessionTime()}
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        </CardContent>
+      </Card>
 
       {/* Recent Punches Card */}
-      <div className="bg-warehouse-gray-800 rounded-xl p-4 border border-warehouse-gray-700">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-warehouse-gray-400 text-sm font-medium uppercase tracking-wide">
-            Recent Punches
-          </h2>
-          <button
-            onClick={() => router.push("/dashboard/history")}
-            className="flex items-center gap-1 text-warehouse-orange text-sm hover:underline"
-          >
-            See All
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
+      <Card>
+        <CardContent>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+            <Typography
+              variant="overline"
+              sx={{ color: m3Tokens.colors.onSurface.variant, letterSpacing: 1 }}
+            >
+              Recent Punches
+            </Typography>
+            <Button
+              variant="text"
+              size="small"
+              endIcon={<ChevronRight />}
+              onClick={() => router.push("/dashboard/history")}
+              sx={{ color: m3Tokens.colors.primary.main }}
+            >
+              See All
+            </Button>
+          </Box>
 
-        {recentPunches.length === 0 ? (
-          <p className="text-warehouse-gray-500 text-sm text-center py-4">
-            No recent punches
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {recentPunches.map((punch) => (
-              <div
-                key={punch.date}
-                className="flex items-center justify-between py-2 border-b border-warehouse-gray-700 last:border-0"
-              >
-                <div>
-                  <div className="text-warehouse-white text-sm font-medium">
-                    {formatDate(punch.date)}
-                  </div>
-                  <div className="text-warehouse-gray-400 text-xs">
-                    <span className="text-warehouse-success">IN</span>{" "}
-                    {formatTime(punch.clockIn)}
-                    {punch.clockOut && (
+          {recentPunches.length === 0 ? (
+            <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ py: 3 }}>
+              No recent punches
+            </Typography>
+          ) : (
+            <List disablePadding>
+              {recentPunches.map((punch, index) => (
+                <ListItem
+                  key={punch.date}
+                  disablePadding
+                  sx={{
+                    py: 1.5,
+                    borderBottom:
+                      index < recentPunches.length - 1
+                        ? `1px solid ${m3Tokens.colors.outline.variant}`
+                        : "none",
+                  }}
+                >
+                  <ListItemText
+                    primary={formatDate(punch.date)}
+                    secondary={
                       <>
-                        {" → "}
-                        <span className="text-warehouse-error">OUT</span>{" "}
-                        {formatTime(punch.clockOut)}
+                        <Chip
+                          label="IN"
+                          size="small"
+                          sx={{
+                            height: 18,
+                            fontSize: "0.625rem",
+                            mr: 0.5,
+                            bgcolor: `${m3Tokens.colors.success.main}20`,
+                            color: m3Tokens.colors.success.main,
+                          }}
+                        />
+                        {formatTime(punch.clockIn)}
+                        {punch.clockOut && (
+                          <>
+                            {" → "}
+                            <Chip
+                              label="OUT"
+                              size="small"
+                              sx={{
+                                height: 18,
+                                fontSize: "0.625rem",
+                                mr: 0.5,
+                                bgcolor: `${m3Tokens.colors.error.main}20`,
+                                color: m3Tokens.colors.error.main,
+                              }}
+                            />
+                            {formatTime(punch.clockOut)}
+                          </>
+                        )}
                       </>
-                    )}
-                  </div>
-                </div>
-                <div className="text-warehouse-white text-sm font-medium">
-                  {punch.totalMs > 0 ? formatDuration(punch.totalMs) : "--"}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+                    }
+                    primaryTypographyProps={{ variant: "body2", fontWeight: 500 }}
+                    secondaryTypographyProps={{ variant: "caption" }}
+                  />
+                  <Typography variant="body2" fontWeight={500}>
+                    {punch.totalMs > 0 ? formatDuration(punch.totalMs) : "--"}
+                  </Typography>
+                </ListItem>
+              ))}
+            </List>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Quick action - Go to kiosk */}
-      <div className="text-center pt-4">
-        <p className="text-warehouse-gray-500 text-sm">
+      <Box sx={{ textAlign: "center", pt: 2 }}>
+        <Typography variant="body2" color="text.secondary">
           Need to clock in or out?{" "}
-          <a href="/kiosk" className="text-warehouse-orange hover:underline">
+          <Link
+            href="/kiosk"
+            sx={{
+              color: m3Tokens.colors.primary.main,
+              textDecoration: "none",
+              "&:hover": { textDecoration: "underline" },
+            }}
+          >
             Use the kiosk →
-          </a>
-        </p>
-      </div>
-    </div>
+          </Link>
+        </Typography>
+      </Box>
+    </Box>
   );
 }

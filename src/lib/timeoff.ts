@@ -1,21 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
 import type { TimeOffType, RequestStatus } from "@/types/database";
-
-// ============================================
-// Supabase Client
-// ============================================
-
-const DEMO_MODE = !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let supabase: any = null;
-
-if (!DEMO_MODE) {
-  supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-}
+import { getSupabaseClient, isDemoMode, delay } from "./supabase-shared";
 
 // ============================================
 // Types
@@ -100,8 +84,6 @@ let DEMO_REQUESTS: TimeOffRequestData[] = [
   },
 ];
 
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
 // ============================================
 // Time Off Request Functions
 // ============================================
@@ -145,8 +127,10 @@ export async function submitTimeOffRequest(
     comments?: string;
   }
 ) {
+  const supabase = getSupabaseClient();
+  
   // Demo mode
-  if (DEMO_MODE) {
+  if (isDemoMode() || !supabase) {
     await delay(600);
     const newRequest = createDemoRequest(workerId, data);
     DEMO_REQUESTS = [newRequest, ...DEMO_REQUESTS];
@@ -186,18 +170,23 @@ export async function submitTimeOffRequest(
 }
 
 export async function getMyTimeOffRequests(workerId: string) {
+  const supabase = getSupabaseClient();
+  
   // Demo mode
-  if (DEMO_MODE) {
+  if (isDemoMode() || !supabase) {
     await delay(300);
     const requests = DEMO_REQUESTS.filter((r) => r.worker_id === workerId);
     return { success: true, requests };
   }
 
-  // Supabase mode
+  // Supabase mode - join with workers to get reviewer name
   try {
     const { data, error } = await supabase
       .from("time_off_requests")
-      .select("*")
+      .select(`
+        *,
+        reviewer:workers!reviewed_by(full_name)
+      `)
       .eq("worker_id", workerId)
       .order("created_at", { ascending: false });
 
@@ -207,7 +196,13 @@ export async function getMyTimeOffRequests(workerId: string) {
       return { success: true, requests };
     }
 
-    return { success: true, requests: data as TimeOffRequestData[] };
+    // Map to include reviewer name
+    const requests = (data || []).map((r: { reviewer?: { full_name: string } }) => ({
+      ...r,
+      reviewer_name: r.reviewer?.full_name || null,
+    }));
+
+    return { success: true, requests: requests as TimeOffRequestData[] };
   } catch (err) {
     console.warn("Error fetching requests, using demo data:", err);
     const requests = DEMO_REQUESTS.filter((r) => r.worker_id === workerId);
@@ -216,20 +211,23 @@ export async function getMyTimeOffRequests(workerId: string) {
 }
 
 export async function getAllPendingRequests() {
+  const supabase = getSupabaseClient();
+  
   // Demo mode
-  if (DEMO_MODE) {
+  if (isDemoMode() || !supabase) {
     await delay(300);
     const pending = DEMO_REQUESTS.filter((r) => r.status === "pending");
     return { success: true, requests: pending };
   }
 
   // Supabase mode - join with workers to get names
+  // Use !worker_id to specify which foreign key to use (avoids ambiguity with reviewed_by)
   try {
     const { data, error } = await supabase
       .from("time_off_requests")
       .select(`
         *,
-        worker:workers(full_name)
+        worker:workers!worker_id(full_name)
       `)
       .eq("status", "pending")
       .order("created_at", { ascending: true });
@@ -257,19 +255,22 @@ export async function getAllPendingRequests() {
 }
 
 export async function getAllTimeOffRequests() {
+  const supabase = getSupabaseClient();
+  
   // Demo mode
-  if (DEMO_MODE) {
+  if (isDemoMode() || !supabase) {
     await delay(300);
     return { success: true, requests: DEMO_REQUESTS };
   }
 
   // Supabase mode
+  // Use !worker_id and !reviewed_by to specify which foreign keys to use
   try {
     const { data, error } = await supabase
       .from("time_off_requests")
       .select(`
         *,
-        worker:workers(full_name),
+        worker:workers!worker_id(full_name),
         reviewer:workers!reviewed_by(full_name)
       `)
       .order("created_at", { ascending: false })
@@ -301,6 +302,8 @@ function updateDemoRequest(requestId: string, updates: Partial<TimeOffRequestDat
 }
 
 export async function approveRequest(requestId: string, managerId: string) {
+  const supabase = getSupabaseClient();
+  
   const updates = {
     status: "approved" as const,
     reviewed_by: managerId,
@@ -308,7 +311,7 @@ export async function approveRequest(requestId: string, managerId: string) {
   };
 
   // Demo mode or demo request ID
-  if (DEMO_MODE || requestId.startsWith("demo-")) {
+  if (isDemoMode() || !supabase || requestId.startsWith("demo-")) {
     await delay(500);
     updateDemoRequest(requestId, updates);
     return { success: true };
@@ -340,6 +343,8 @@ export async function approveRequest(requestId: string, managerId: string) {
 }
 
 export async function denyRequest(requestId: string, managerId: string, reason?: string) {
+  const supabase = getSupabaseClient();
+  
   const updates = {
     status: "denied" as const,
     reviewed_by: managerId,
@@ -348,7 +353,7 @@ export async function denyRequest(requestId: string, managerId: string, reason?:
   };
 
   // Demo mode or demo request ID
-  if (DEMO_MODE || requestId.startsWith("demo-")) {
+  if (isDemoMode() || !supabase || requestId.startsWith("demo-")) {
     await delay(500);
     updateDemoRequest(requestId, updates);
     return { success: true };

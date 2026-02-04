@@ -1,10 +1,27 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, X, Clock, User, Calendar } from "lucide-react";
 import { toast } from "sonner";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Button from "@mui/material/Button";
+import Avatar from "@mui/material/Avatar";
+import Chip from "@mui/material/Chip";
+import CircularProgress from "@mui/material/CircularProgress";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import TextField from "@mui/material/TextField";
+import Check from "@mui/icons-material/Check";
+import Close from "@mui/icons-material/Close";
+import AccessTime from "@mui/icons-material/AccessTime";
+import PersonOutlined from "@mui/icons-material/PersonOutlined";
+import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import { getAllPendingRequests, approveRequest, denyRequest, type TimeOffRequestData } from "@/lib/timeoff";
-import { cn } from "@/lib/utils";
+import { m3Tokens } from "@/theme";
 
 const TYPE_LABELS: Record<string, string> = {
   vacation: "Vacation",
@@ -14,12 +31,12 @@ const TYPE_LABELS: Record<string, string> = {
   unpaid: "Unpaid",
 };
 
-const TYPE_COLORS: Record<string, string> = {
-  vacation: "bg-blue-500/20 text-blue-400",
-  personal: "bg-purple-500/20 text-purple-400",
-  sick: "bg-red-500/20 text-red-400",
-  bereavement: "bg-gray-500/20 text-gray-400",
-  unpaid: "bg-yellow-500/20 text-yellow-400",
+const TYPE_COLORS: Record<string, { bg: string; text: string }> = {
+  vacation: { bg: "#3B82F620", text: "#60A5FA" },
+  personal: { bg: "#A855F720", text: "#C084FC" },
+  sick: { bg: "#EF444420", text: "#F87171" },
+  bereavement: { bg: "#6B728020", text: "#9CA3AF" },
+  unpaid: { bg: "#F59E0B20", text: "#FBBF24" },
 };
 
 export default function ManagerPendingPage() {
@@ -29,7 +46,6 @@ export default function ManagerPendingPage() {
   const [showDenyModal, setShowDenyModal] = useState<string | null>(null);
   const [denyReason, setDenyReason] = useState("");
 
-  // Get manager ID from session
   const getManagerId = () => {
     const stored = localStorage.getItem("rome_session");
     if (stored) {
@@ -57,15 +73,14 @@ export default function ManagerPendingPage() {
 
     setProcessingId(requestId);
     const result = await approveRequest(requestId, managerId);
-    
+
     if (result.success) {
       toast.success("Request approved!");
-      // Remove from list
       setRequests((prev) => prev.filter((r) => r.id !== requestId));
     } else {
       toast.error("Failed to approve request");
     }
-    
+
     setProcessingId(null);
   };
 
@@ -75,7 +90,7 @@ export default function ManagerPendingPage() {
 
     setProcessingId(requestId);
     const result = await denyRequest(requestId, managerId, denyReason);
-    
+
     if (result.success) {
       toast.success("Request denied");
       setRequests((prev) => prev.filter((r) => r.id !== requestId));
@@ -84,7 +99,7 @@ export default function ManagerPendingPage() {
     } else {
       toast.error("Failed to deny request");
     }
-    
+
     setProcessingId(null);
   };
 
@@ -92,11 +107,11 @@ export default function ManagerPendingPage() {
     const startDate = new Date(start);
     const endDate = new Date(end);
     const opts: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" };
-    
+
     if (start === end) {
       return startDate.toLocaleDateString("en-US", { ...opts, weekday: "short" });
     }
-    
+
     return `${startDate.toLocaleDateString("en-US", opts)} - ${endDate.toLocaleDateString("en-US", opts)}`;
   };
 
@@ -113,7 +128,7 @@ export default function ManagerPendingPage() {
     const diffMs = now.getTime() - date.getTime();
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffHours / 24);
-    
+
     if (diffDays > 0) {
       return `${diffDays}d ago`;
     }
@@ -125,179 +140,189 @@ export default function ManagerPendingPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-3 border-warehouse-gray-600 border-t-warehouse-orange rounded-full animate-spin" />
-      </div>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: 256 }}>
+        <CircularProgress />
+      </Box>
     );
   }
 
   return (
-    <div className="p-4">
+    <Box sx={{ p: 2 }}>
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-warehouse-white">
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h5" fontWeight={600}>
           Pending Requests
-        </h1>
-        <p className="text-warehouse-gray-400 text-sm mt-1">
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
           {requests.length} request{requests.length !== 1 ? "s" : ""} awaiting approval
-        </p>
-      </div>
+        </Typography>
+      </Box>
 
       {/* Requests List */}
       {requests.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="w-16 h-16 rounded-full bg-warehouse-gray-800 flex items-center justify-center mx-auto mb-4">
-            <Check className="w-8 h-8 text-warehouse-success" />
-          </div>
-          <p className="text-warehouse-gray-400 text-lg">All caught up!</p>
-          <p className="text-warehouse-gray-500 text-sm mt-1">No pending requests</p>
-        </div>
+        <Box sx={{ textAlign: "center", py: 6 }}>
+          <Avatar
+            sx={{
+              width: 64,
+              height: 64,
+              bgcolor: `${m3Tokens.colors.success.main}20`,
+              mx: "auto",
+              mb: 2,
+            }}
+          >
+            <Check sx={{ fontSize: 32, color: m3Tokens.colors.success.main }} />
+          </Avatar>
+          <Typography variant="h6" color="text.secondary">
+            All caught up!
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            No pending requests
+          </Typography>
+        </Box>
       ) : (
-        <div className="space-y-4">
-          {requests.map((request) => (
-            <div
-              key={request.id}
-              className="bg-warehouse-gray-800 rounded-xl p-4 border border-warehouse-gray-700"
-            >
-              {/* Header */}
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-warehouse-gray-700 flex items-center justify-center">
-                    <User className="w-5 h-5 text-warehouse-gray-400" />
-                  </div>
-                  <div>
-                    <p className="text-warehouse-white font-semibold">
-                      {request.worker_name || "Unknown Worker"}
-                    </p>
-                    <p className="text-warehouse-gray-500 text-xs flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {getTimeAgo(request.created_at)}
-                    </p>
-                  </div>
-                </div>
-                <span className={cn(
-                  "px-2 py-1 rounded text-xs font-medium",
-                  TYPE_COLORS[request.type] || "bg-gray-500/20 text-gray-400"
-                )}>
-                  {TYPE_LABELS[request.type] || request.type}
-                </span>
-              </div>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {requests.map((request) => {
+            const typeColor = TYPE_COLORS[request.type] || TYPE_COLORS.unpaid;
+            return (
+              <Card key={request.id}>
+                <CardContent>
+                  {/* Header */}
+                  <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                      <Avatar sx={{ bgcolor: m3Tokens.colors.surface.containerHigh }}>
+                        <PersonOutlined sx={{ color: m3Tokens.colors.onSurface.variant }} />
+                      </Avatar>
+                      <Box>
+                        <Typography variant="subtitle2" fontWeight={600}>
+                          {request.worker_name || "Unknown Worker"}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                          <AccessTime sx={{ fontSize: 12 }} />
+                          {getTimeAgo(request.created_at)}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Chip
+                      label={TYPE_LABELS[request.type] || request.type}
+                      size="small"
+                      sx={{
+                        bgcolor: typeColor.bg,
+                        color: typeColor.text,
+                        fontWeight: 500,
+                      }}
+                    />
+                  </Box>
 
-              {/* Details */}
-              <div className="bg-warehouse-gray-900 rounded-lg p-3 mb-4">
-                <div className="flex items-center gap-2 text-warehouse-white mb-2">
-                  <Calendar className="w-4 h-4 text-warehouse-orange" />
-                  <span className="font-medium">
-                    {formatDateRange(request.start_date, request.end_date)}
-                  </span>
-                  <span className="text-warehouse-gray-500">
-                    ({getDayCount(request.start_date, request.end_date)})
-                  </span>
-                </div>
-                
-                {request.paid_hours > 0 && (
-                  <p className="text-warehouse-gray-400 text-sm">
-                    Paid: {request.paid_hours}h
-                  </p>
-                )}
-                {request.unpaid_hours > 0 && (
-                  <p className="text-warehouse-gray-400 text-sm">
-                    Unpaid: {request.unpaid_hours}h
-                  </p>
-                )}
-                
-                {request.comments && (
-                  <p className="text-warehouse-gray-400 text-sm mt-2 italic">
-                    &quot;{request.comments}&quot;
-                  </p>
-                )}
-              </div>
+                  {/* Details */}
+                  <Card
+                    variant="outlined"
+                    sx={{
+                      mb: 2,
+                      bgcolor: m3Tokens.colors.surface.containerLow,
+                      borderColor: m3Tokens.colors.outline.variant,
+                    }}
+                  >
+                    <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                        <CalendarTodayOutlined sx={{ fontSize: 18, color: m3Tokens.colors.primary.main }} />
+                        <Typography variant="body2" fontWeight={500}>
+                          {formatDateRange(request.start_date, request.end_date)}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          ({getDayCount(request.start_date, request.end_date)})
+                        </Typography>
+                      </Box>
 
-              {/* Actions */}
-              <div className="flex gap-3">
-                <button
-                  onClick={() => handleApprove(request.id)}
-                  disabled={processingId === request.id}
-                  className={cn(
-                    "flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-semibold transition-colors",
-                    "bg-warehouse-success text-warehouse-black hover:bg-green-600",
-                    "disabled:opacity-50 disabled:cursor-not-allowed"
-                  )}
-                >
-                  {processingId === request.id ? (
-                    <div className="w-5 h-5 border-2 border-warehouse-black/30 border-t-warehouse-black rounded-full animate-spin" />
-                  ) : (
-                    <Check className="w-5 h-5" />
-                  )}
-                  Approve
-                </button>
-                
-                <button
-                  onClick={() => setShowDenyModal(request.id)}
-                  disabled={processingId === request.id}
-                  className={cn(
-                    "flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-semibold transition-colors",
-                    "bg-warehouse-gray-700 text-warehouse-white hover:bg-warehouse-gray-600",
-                    "disabled:opacity-50 disabled:cursor-not-allowed"
-                  )}
-                >
-                  <X className="w-5 h-5" />
-                  Deny
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+                      {request.paid_hours > 0 && (
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          Paid: {request.paid_hours}h
+                        </Typography>
+                      )}
+                      {request.unpaid_hours > 0 && (
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          Unpaid: {request.unpaid_hours}h
+                        </Typography>
+                      )}
+
+                      {request.comments && (
+                        <Typography variant="body2" color="text.secondary" fontStyle="italic" sx={{ mt: 1 }}>
+                          &quot;{request.comments}&quot;
+                        </Typography>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Actions */}
+                  <Box sx={{ display: "flex", gap: 1.5 }}>
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      startIcon={processingId === request.id ? <CircularProgress size={18} color="inherit" /> : <Check />}
+                      onClick={() => handleApprove(request.id)}
+                      disabled={processingId === request.id}
+                      sx={{
+                        bgcolor: m3Tokens.colors.success.main,
+                        "&:hover": { bgcolor: m3Tokens.colors.success.dark },
+                      }}
+                    >
+                      Approve
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      startIcon={<Close />}
+                      onClick={() => setShowDenyModal(request.id)}
+                      disabled={processingId === request.id}
+                      sx={{
+                        borderColor: m3Tokens.colors.outline.variant,
+                        color: m3Tokens.colors.onSurface.main,
+                      }}
+                    >
+                      Deny
+                    </Button>
+                  </Box>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </Box>
       )}
 
-      {/* Deny Modal */}
-      {showDenyModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
-          <div className="bg-warehouse-gray-800 rounded-xl p-6 w-full max-w-md border border-warehouse-gray-700">
-            <h3 className="text-xl font-bold text-warehouse-white mb-4">
-              Deny Request?
-            </h3>
-            
-            <div className="mb-4">
-              <label className="block text-warehouse-gray-400 text-sm mb-2">
-                Reason (optional)
-              </label>
-              <textarea
-                value={denyReason}
-                onChange={(e) => setDenyReason(e.target.value)}
-                placeholder="e.g., Coverage unavailable"
-                rows={3}
-                className={cn(
-                  "w-full px-4 py-3 rounded-xl resize-none",
-                  "bg-warehouse-gray-900 text-warehouse-white",
-                  "border border-warehouse-gray-600",
-                  "focus:border-warehouse-orange focus:outline-none",
-                  "placeholder:text-warehouse-gray-500"
-                )}
-              />
-            </div>
-            
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowDenyModal(null);
-                  setDenyReason("");
-                }}
-                className="flex-1 py-3 rounded-lg font-semibold bg-warehouse-gray-700 text-warehouse-white hover:bg-warehouse-gray-600"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleDeny(showDenyModal)}
-                disabled={processingId !== null}
-                className="flex-1 py-3 rounded-lg font-semibold bg-warehouse-error text-warehouse-white hover:bg-red-600 disabled:opacity-50"
-              >
-                Deny Request
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+      {/* Deny Dialog */}
+      <Dialog open={!!showDenyModal} onClose={() => setShowDenyModal(null)} maxWidth="xs" fullWidth>
+        <DialogTitle>Deny Request?</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            fullWidth
+            multiline
+            rows={3}
+            label="Reason (optional)"
+            value={denyReason}
+            onChange={(e) => setDenyReason(e.target.value)}
+            placeholder="e.g., Coverage unavailable"
+            sx={{ mt: 1 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setShowDenyModal(null);
+              setDenyReason("");
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => showDenyModal && handleDeny(showDenyModal)}
+            disabled={processingId !== null}
+          >
+            Deny Request
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 }

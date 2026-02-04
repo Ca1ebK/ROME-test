@@ -2,8 +2,19 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Home, Calendar, Settings, LogOut } from "lucide-react";
-import { cn } from "@/lib/utils";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Avatar from "@mui/material/Avatar";
+import IconButton from "@mui/material/IconButton";
+import BottomNavigation from "@mui/material/BottomNavigation";
+import BottomNavigationAction from "@mui/material/BottomNavigationAction";
+import CircularProgress from "@mui/material/CircularProgress";
+import Paper from "@mui/material/Paper";
+import HomeOutlined from "@mui/icons-material/HomeOutlined";
+import EventNoteOutlined from "@mui/icons-material/EventNoteOutlined";
+import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
+import Logout from "@mui/icons-material/Logout";
+import { m3Tokens } from "@/theme";
 
 interface Session {
   workerId: string;
@@ -54,74 +65,134 @@ export default function DashboardLayout({
 
   if (isLoading) {
     return (
-      <div className="min-h-dvh bg-warehouse-black flex items-center justify-center">
-        <div className="w-8 h-8 border-3 border-warehouse-gray-600 border-t-warehouse-orange rounded-full animate-spin" />
-      </div>
+      <Box
+        sx={{
+          minHeight: "100dvh",
+          backgroundColor: m3Tokens.colors.surface.main,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <CircularProgress />
+      </Box>
     );
   }
 
   const navItems = [
-    { href: "/dashboard", icon: Home, label: "Home" },
-    { href: "/dashboard/time-off", icon: Calendar, label: "Time Off" },
-    { href: "/dashboard/settings", icon: Settings, label: "Settings" },
+    { href: "/dashboard", icon: HomeOutlined, label: "Home" },
+    { href: "/dashboard/time-off", icon: EventNoteOutlined, label: "Time Off" },
+    { href: "/dashboard/settings", icon: SettingsOutlined, label: "Settings" },
   ];
 
+  const getNavValue = () => {
+    if (pathname === "/dashboard") return 0;
+    if (pathname.startsWith("/dashboard/time-off")) return 1;
+    if (pathname.startsWith("/dashboard/settings")) return 2;
+    return 0;
+  };
+
   return (
-    <div className="min-h-dvh bg-warehouse-black flex flex-col">
+    <Box
+      sx={{
+        minHeight: "100dvh",
+        backgroundColor: m3Tokens.colors.surface.main,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 border-b border-warehouse-gray-800">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-warehouse-orange flex items-center justify-center">
-            <span className="text-warehouse-black font-bold text-sm">R</span>
-          </div>
-          <span className="text-lg font-bold text-warehouse-white">ROME</span>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-warehouse-gray-400">
-            {session?.workerName}
-          </span>
-          <button
-            onClick={handleLogout}
-            className="p-2 text-warehouse-gray-400 hover:text-warehouse-white transition-colors"
-            title="Log out"
+      <Box
+        component="header"
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          px: 2,
+          py: 1.5,
+          borderBottom: `1px solid ${m3Tokens.colors.outline.variant}`,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Avatar
+            sx={{
+              width: 32,
+              height: 32,
+              bgcolor: m3Tokens.colors.primary.main,
+              fontSize: "0.875rem",
+              fontWeight: "bold",
+            }}
           >
-            <LogOut className="w-5 h-5" />
-          </button>
-        </div>
-      </header>
+            R
+          </Avatar>
+          <Typography variant="subtitle1" fontWeight={700}>
+            ROME
+          </Typography>
+        </Box>
+
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Typography variant="body2" color="text.secondary">
+            {session?.workerName}
+          </Typography>
+          <IconButton
+            onClick={handleLogout}
+            size="small"
+            sx={{ color: m3Tokens.colors.onSurface.variant }}
+          >
+            <Logout fontSize="small" />
+          </IconButton>
+        </Box>
+      </Box>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto pb-20">
+      <Box
+        component="main"
+        sx={{
+          flex: 1,
+          overflow: "auto",
+          pb: 10,
+        }}
+      >
         {children}
-      </main>
+      </Box>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-warehouse-gray-900 border-t border-warehouse-gray-800 safe-area-inset">
-        <div className="flex items-center justify-around py-2">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href || 
-              (item.href !== "/dashboard" && pathname.startsWith(item.href));
-            const Icon = item.icon;
-            
-            return (
-              <button
-                key={item.href}
-                onClick={() => router.push(item.href)}
-                className={cn(
-                  "flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors",
-                  isActive
-                    ? "text-warehouse-orange"
-                    : "text-warehouse-gray-500 hover:text-warehouse-gray-300"
-                )}
-              >
-                <Icon className="w-6 h-6" />
-                <span className="text-xs font-medium">{item.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
-    </div>
+      <Paper
+        sx={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 1000,
+        }}
+        elevation={8}
+      >
+        <BottomNavigation
+          value={getNavValue()}
+          onChange={(_, newValue) => {
+            router.push(navItems[newValue].href);
+          }}
+          sx={{
+            backgroundColor: m3Tokens.colors.surface.container,
+            borderTop: `1px solid ${m3Tokens.colors.outline.variant}`,
+            "& .MuiBottomNavigationAction-root": {
+              color: m3Tokens.colors.onSurface.variant,
+              minWidth: 80,
+              "&.Mui-selected": {
+                color: m3Tokens.colors.primary.main,
+              },
+            },
+          }}
+        >
+          {navItems.map((item) => (
+            <BottomNavigationAction
+              key={item.href}
+              label={item.label}
+              icon={<item.icon />}
+            />
+          ))}
+        </BottomNavigation>
+      </Paper>
+    </Box>
   );
 }

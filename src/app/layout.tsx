@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Toaster } from "sonner";
+import { ThemeRegistry } from "@/theme/ThemeRegistry";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -18,7 +19,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#0A0A0A",
+  themeColor: "#1C1B1F",
 };
 
 export default function RootLayout({
@@ -28,19 +29,21 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="kiosk-no-select">
-        {children}
-        <Toaster
-          position="top-center"
-          expand={true}
-          richColors
-          toastOptions={{
-            style: {
-              fontSize: "1.25rem",
-              padding: "1rem 1.5rem",
-            },
-          }}
-        />
+      <body>
+        <ThemeRegistry>
+          {children}
+          <Toaster
+            position="top-center"
+            expand={true}
+            richColors
+            toastOptions={{
+              style: {
+                fontSize: "1.25rem",
+                padding: "1rem 1.5rem",
+              },
+            }}
+          />
+        </ThemeRegistry>
       </body>
     </html>
   );
