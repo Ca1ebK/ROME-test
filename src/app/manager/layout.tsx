@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -15,12 +14,7 @@ import AssignmentOutlined from "@mui/icons-material/AssignmentOutlined";
 import HistoryOutlined from "@mui/icons-material/HistoryOutlined";
 import Logout from "@mui/icons-material/Logout";
 import { m3Tokens } from "@/theme";
-
-interface Session {
-  workerId: string;
-  workerName: string;
-  role: string;
-}
+import { useSession } from "@/hooks/useSession";
 
 export default function ManagerLayout({
   children,
@@ -29,49 +23,12 @@ export default function ManagerLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Check session and role on mount
-  useEffect(() => {
-    const stored = localStorage.getItem("rome_session");
-    if (!stored) {
-      router.push("/login");
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(stored);
-
-      if (parsed.role !== "manager" && parsed.role !== "supervisor") {
-        router.push("/dashboard");
-        return;
-      }
-
-      if (parsed.expiresAt < Date.now()) {
-        localStorage.removeItem("rome_session");
-        router.push("/login");
-        return;
-      }
-
-      setSession({
-        workerId: parsed.workerId,
-        workerName: parsed.workerName,
-        role: parsed.role,
-      });
-    } catch {
-      localStorage.removeItem("rome_session");
-      router.push("/login");
-      return;
-    }
-
-    setIsLoading(false);
-  }, [router]);
-
-  const handleLogout = () => {
-    localStorage.removeItem("rome_session");
-    router.push("/login");
-  };
+  
+  // Use session hook with role requirement
+  const { session, isLoading, logout } = useSession({
+    requiredRoles: ["manager", "supervisor"],
+    roleFailRedirect: "/dashboard",
+  });
 
   if (isLoading) {
     return (
@@ -153,7 +110,7 @@ export default function ManagerLayout({
             {session?.workerName}
           </Typography>
           <IconButton
-            onClick={handleLogout}
+            onClick={logout}
             size="small"
             sx={{ color: m3Tokens.colors.onSurface.variant }}
           >

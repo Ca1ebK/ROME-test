@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Avatar from "@mui/material/Avatar";
@@ -15,13 +15,7 @@ import EventNoteOutlined from "@mui/icons-material/EventNoteOutlined";
 import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
 import Logout from "@mui/icons-material/Logout";
 import { m3Tokens } from "@/theme";
-
-interface Session {
-  workerId: string;
-  workerName: string;
-  email: string;
-  expiresAt: number;
-}
+import { useSession } from "@/hooks/useSession";
 
 export default function DashboardLayout({
   children,
@@ -30,38 +24,7 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Check session on mount
-  useEffect(() => {
-    const stored = localStorage.getItem("rome_session");
-    if (!stored) {
-      router.push("/login");
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(stored) as Session;
-      if (parsed.expiresAt < Date.now()) {
-        localStorage.removeItem("rome_session");
-        router.push("/login");
-        return;
-      }
-      setSession(parsed);
-    } catch {
-      localStorage.removeItem("rome_session");
-      router.push("/login");
-      return;
-    }
-
-    setIsLoading(false);
-  }, [router]);
-
-  const handleLogout = () => {
-    localStorage.removeItem("rome_session");
-    router.push("/login");
-  };
+  const { session, isLoading, logout } = useSession();
 
   if (isLoading) {
     return (
@@ -135,7 +98,7 @@ export default function DashboardLayout({
             {session?.workerName}
           </Typography>
           <IconButton
-            onClick={handleLogout}
+            onClick={logout}
             size="small"
             sx={{ color: m3Tokens.colors.onSurface.variant }}
           >
