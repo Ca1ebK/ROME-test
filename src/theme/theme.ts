@@ -2,10 +2,11 @@
 
 import { createTheme, ThemeOptions } from "@mui/material/styles";
 
-// M3 Color Palette - Scholastic Red theme
+// M3 Color Palettes - Scholastic Red theme
 // Primary derived from Scholastic brand red #E6000D
-// Generated following Material Design 3 dark theme guidelines
-const m3Colors = {
+// Generated following Material Design 3 guidelines
+
+const m3DarkColors = {
   // Primary - Scholastic Red (toned for dark theme readability)
   primary: {
     main: "#FFB4AB",
@@ -68,6 +69,72 @@ const m3Colors = {
   outline: {
     main: "#A08C89",
     variant: "#534342",
+  },
+};
+
+const m3LightColors = {
+  // Primary - Scholastic Red
+  primary: {
+    main: "#BE0008",
+    light: "#FF5449",
+    dark: "#8C0009",
+    contrastText: "#FFFFFF",
+  },
+  // Secondary - Warm neutral
+  secondary: {
+    main: "#775652",
+    light: "#E7BDB6",
+    dark: "#442B27",
+    contrastText: "#FFFFFF",
+  },
+  // Tertiary - Warm gold accent
+  tertiary: {
+    main: "#715D2F",
+    light: "#DEC48C",
+    dark: "#3F2D04",
+    contrastText: "#FFFFFF",
+  },
+  // Error
+  error: {
+    main: "#BA1A1A",
+    light: "#FFDAD6",
+    dark: "#93000A",
+    contrastText: "#FFFFFF",
+  },
+  // Success
+  success: {
+    main: "#386A20",
+    light: "#C8EED2",
+    dark: "#1B5000",
+    contrastText: "#FFFFFF",
+  },
+  // Warning
+  warning: {
+    main: "#7D5800",
+    light: "#FFEAC2",
+    dark: "#4A3800",
+    contrastText: "#FFFFFF",
+  },
+  // Surface colors for light theme
+  surface: {
+    main: "#FFF8F7",
+    dim: "#E4D7D5",
+    bright: "#FFF8F7",
+    containerLowest: "#FFFFFF",
+    containerLow: "#FEF1EF",
+    container: "#F8EBEA",
+    containerHigh: "#F2E5E3",
+    containerHighest: "#ECDFE0",
+  },
+  // On-surface colors
+  onSurface: {
+    main: "#231918",
+    variant: "#534342",
+  },
+  // Outline
+  outline: {
+    main: "#857371",
+    variant: "#D8C2BE",
   },
 };
 
@@ -218,307 +285,324 @@ const m3Motion = {
   },
 };
 
-// Create the theme
-const themeOptions: ThemeOptions = {
-  palette: {
-    mode: "dark",
-    primary: m3Colors.primary,
-    secondary: m3Colors.secondary,
-    error: m3Colors.error,
-    success: m3Colors.success,
-    warning: m3Colors.warning,
-    background: {
-      default: m3Colors.surface.main,
-      paper: m3Colors.surface.container,
-    },
-    text: {
-      primary: m3Colors.onSurface.main,
-      secondary: m3Colors.onSurface.variant,
-    },
-    divider: m3Colors.outline.variant,
-  },
-  typography: {
-    fontFamily: m3Typography.fontFamily,
-    h1: m3Typography.displayLarge,
-    h2: m3Typography.displayMedium,
-    h3: m3Typography.displaySmall,
-    h4: m3Typography.headlineLarge,
-    h5: m3Typography.headlineMedium,
-    h6: m3Typography.headlineSmall,
-    subtitle1: m3Typography.titleLarge,
-    subtitle2: m3Typography.titleMedium,
-    body1: m3Typography.bodyLarge,
-    body2: m3Typography.bodyMedium,
-    button: m3Typography.labelLarge,
-    caption: m3Typography.bodySmall,
-    overline: m3Typography.labelSmall,
-  },
-  shape: {
-    borderRadius: m3Shape.medium,
-  },
-  components: {
-    MuiCssBaseline: {
-      styleOverrides: {
-        body: {
-          backgroundColor: m3Colors.surface.main,
-          color: m3Colors.onSurface.main,
-        },
+// Create theme for a given mode
+export function createAppTheme(mode: "light" | "dark") {
+  const m3Colors = mode === "dark" ? m3DarkColors : m3LightColors;
+
+  const themeOptions: ThemeOptions = {
+    palette: {
+      mode,
+      primary: m3Colors.primary,
+      secondary: m3Colors.secondary,
+      error: m3Colors.error,
+      success: m3Colors.success,
+      warning: m3Colors.warning,
+      background: {
+        default: m3Colors.surface.main,
+        paper: m3Colors.surface.container,
       },
+      text: {
+        primary: m3Colors.onSurface.main,
+        secondary: m3Colors.onSurface.variant,
+      },
+      divider: m3Colors.outline.variant,
     },
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: m3Shape.full,
-          textTransform: "none",
-          fontWeight: 500,
-          padding: "10px 24px",
-          transition: `all ${m3Motion.duration.short4}ms ${m3Motion.easing.standard}`,
-        },
-        contained: {
-          boxShadow: "none",
-          "&:hover": {
-            boxShadow: "0px 1px 3px 1px rgba(0,0,0,0.15), 0px 1px 2px 0px rgba(0,0,0,0.3)",
-          },
-        },
-        outlined: {
-          borderColor: m3Colors.outline.main,
-        },
-      },
-      defaultProps: {
-        disableElevation: true,
-      },
+    typography: {
+      fontFamily: m3Typography.fontFamily,
+      h1: m3Typography.displayLarge,
+      h2: m3Typography.displayMedium,
+      h3: m3Typography.displaySmall,
+      h4: m3Typography.headlineLarge,
+      h5: m3Typography.headlineMedium,
+      h6: m3Typography.headlineSmall,
+      subtitle1: m3Typography.titleLarge,
+      subtitle2: m3Typography.titleMedium,
+      body1: m3Typography.bodyLarge,
+      body2: m3Typography.bodyMedium,
+      button: m3Typography.labelLarge,
+      caption: m3Typography.bodySmall,
+      overline: m3Typography.labelSmall,
     },
-    MuiIconButton: {
-      styleOverrides: {
-        root: {
-          transition: `all ${m3Motion.duration.short4}ms ${m3Motion.easing.standard}`,
-        },
-      },
+    shape: {
+      borderRadius: m3Shape.medium,
     },
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          borderRadius: m3Shape.large,
-          backgroundColor: m3Colors.surface.container,
-          backgroundImage: "none",
-        },
-      },
-      defaultProps: {
-        elevation: 0,
-      },
-    },
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          backgroundImage: "none",
-        },
-        rounded: {
-          borderRadius: m3Shape.large,
-        },
-      },
-    },
-    MuiChip: {
-      styleOverrides: {
-        root: {
-          borderRadius: m3Shape.small,
-          fontWeight: 500,
-        },
-        filled: {
-          backgroundColor: m3Colors.surface.containerHigh,
-        },
-      },
-    },
-    MuiTextField: {
-      styleOverrides: {
-        root: {
-          "& .MuiOutlinedInput-root": {
-            borderRadius: m3Shape.extraSmall,
-            "& fieldset": {
-              borderColor: m3Colors.outline.main,
-            },
-            "&:hover fieldset": {
-              borderColor: m3Colors.onSurface.main,
-            },
+    components: {
+      MuiCssBaseline: {
+        styleOverrides: {
+          body: {
+            backgroundColor: m3Colors.surface.main,
+            color: m3Colors.onSurface.main,
           },
         },
       },
-    },
-    MuiSwitch: {
-      styleOverrides: {
-        root: {
-          width: 52,
-          height: 32,
-          padding: 0,
-        },
-        switchBase: {
-          padding: 4,
-          "&.Mui-checked": {
-            transform: "translateX(20px)",
-            "& + .MuiSwitch-track": {
-              backgroundColor: m3Colors.primary.main,
-              opacity: 1,
+      MuiButton: {
+        styleOverrides: {
+          root: {
+            borderRadius: m3Shape.full,
+            textTransform: "none",
+            fontWeight: 500,
+            padding: "10px 24px",
+            transition: `all ${m3Motion.duration.short4}ms ${m3Motion.easing.standard}`,
+          },
+          contained: {
+            boxShadow: "none",
+            "&:hover": {
+              boxShadow: "0px 1px 3px 1px rgba(0,0,0,0.15), 0px 1px 2px 0px rgba(0,0,0,0.3)",
             },
           },
+          outlined: {
+            borderColor: m3Colors.outline.main,
+          },
         },
-        thumb: {
-          width: 24,
-          height: 24,
-          boxShadow: "0px 2px 4px rgba(0,0,0,0.2)",
-        },
-        track: {
-          borderRadius: m3Shape.full,
-          backgroundColor: m3Colors.surface.containerHighest,
-          opacity: 1,
+        defaultProps: {
+          disableElevation: true,
         },
       },
-    },
-    MuiDialog: {
-      styleOverrides: {
-        paper: {
-          borderRadius: m3Shape.extraLarge,
-          backgroundColor: m3Colors.surface.containerHigh,
+      MuiIconButton: {
+        styleOverrides: {
+          root: {
+            transition: `all ${m3Motion.duration.short4}ms ${m3Motion.easing.standard}`,
+          },
         },
       },
-    },
-    MuiSlider: {
-      styleOverrides: {
-        root: {
-          height: 16,
+      MuiCard: {
+        styleOverrides: {
+          root: {
+            borderRadius: m3Shape.large,
+            backgroundColor: m3Colors.surface.container,
+            backgroundImage: "none",
+          },
         },
-        thumb: {
-          width: 20,
-          height: 20,
-        },
-        track: {
-          borderRadius: m3Shape.full,
-        },
-        rail: {
-          borderRadius: m3Shape.full,
-          backgroundColor: m3Colors.surface.containerHighest,
+        defaultProps: {
+          elevation: 0,
         },
       },
-    },
-    MuiFab: {
-      styleOverrides: {
-        root: {
-          borderRadius: m3Shape.large,
-          textTransform: "none",
-          boxShadow: "0px 3px 5px -1px rgba(0,0,0,0.2), 0px 6px 10px 0px rgba(0,0,0,0.14), 0px 1px 18px 0px rgba(0,0,0,0.12)",
+      MuiPaper: {
+        styleOverrides: {
+          root: {
+            backgroundImage: "none",
+          },
+          rounded: {
+            borderRadius: m3Shape.large,
+          },
         },
       },
-    },
-    MuiLinearProgress: {
-      styleOverrides: {
-        root: {
-          borderRadius: m3Shape.full,
-          height: 8,
-          backgroundColor: m3Colors.surface.containerHighest,
-        },
-        bar: {
-          borderRadius: m3Shape.full,
-        },
-      },
-    },
-    MuiCircularProgress: {
-      styleOverrides: {
-        root: {
-          color: m3Colors.primary.main,
-        },
-      },
-    },
-    MuiAlert: {
-      styleOverrides: {
-        root: {
-          borderRadius: m3Shape.medium,
-        },
-        standardError: {
-          backgroundColor: "rgba(186, 26, 26, 0.1)",
-          color: m3Colors.error.light,
-        },
-        standardSuccess: {
-          backgroundColor: "rgba(56, 106, 32, 0.1)",
-          color: m3Colors.success.light,
-        },
-      },
-    },
-    MuiAvatar: {
-      styleOverrides: {
-        root: {
-          backgroundColor: m3Colors.primary.main,
-          color: m3Colors.primary.contrastText,
-        },
-      },
-    },
-    MuiList: {
-      styleOverrides: {
-        root: {
-          padding: 0,
-        },
-      },
-    },
-    MuiListItem: {
-      styleOverrides: {
-        root: {
-          borderRadius: m3Shape.medium,
-        },
-      },
-    },
-    MuiListItemButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: m3Shape.medium,
-          transition: `all ${m3Motion.duration.short4}ms ${m3Motion.easing.standard}`,
-          "&:hover": {
+      MuiChip: {
+        styleOverrides: {
+          root: {
+            borderRadius: m3Shape.small,
+            fontWeight: 500,
+          },
+          filled: {
             backgroundColor: m3Colors.surface.containerHigh,
           },
         },
       },
-    },
-    MuiToggleButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: m3Shape.full,
-          textTransform: "none",
-          fontWeight: 500,
-          borderColor: m3Colors.outline.main,
-          "&.Mui-selected": {
-            backgroundColor: m3Colors.secondary.main,
-            color: m3Colors.secondary.contrastText,
+      MuiTextField: {
+        styleOverrides: {
+          root: {
+            "& .MuiOutlinedInput-root": {
+              borderRadius: m3Shape.extraSmall,
+              "& fieldset": {
+                borderColor: m3Colors.outline.main,
+              },
+              "&:hover fieldset": {
+                borderColor: m3Colors.onSurface.main,
+              },
+            },
+          },
+        },
+      },
+      MuiSwitch: {
+        styleOverrides: {
+          root: {
+            width: 52,
+            height: 32,
+            padding: 0,
+          },
+          switchBase: {
+            padding: 4,
+            "&.Mui-checked": {
+              transform: "translateX(20px)",
+              "& + .MuiSwitch-track": {
+                backgroundColor: m3Colors.primary.main,
+                opacity: 1,
+              },
+            },
+          },
+          thumb: {
+            width: 24,
+            height: 24,
+            boxShadow: "0px 2px 4px rgba(0,0,0,0.2)",
+          },
+          track: {
+            borderRadius: m3Shape.full,
+            backgroundColor: m3Colors.surface.containerHighest,
+            opacity: 1,
+          },
+        },
+      },
+      MuiDialog: {
+        styleOverrides: {
+          paper: {
+            borderRadius: m3Shape.extraLarge,
+            backgroundColor: m3Colors.surface.containerHigh,
+          },
+        },
+      },
+      MuiSlider: {
+        styleOverrides: {
+          root: {
+            height: 16,
+          },
+          thumb: {
+            width: 20,
+            height: 20,
+          },
+          track: {
+            borderRadius: m3Shape.full,
+          },
+          rail: {
+            borderRadius: m3Shape.full,
+            backgroundColor: m3Colors.surface.containerHighest,
+          },
+        },
+      },
+      MuiFab: {
+        styleOverrides: {
+          root: {
+            borderRadius: m3Shape.large,
+            textTransform: "none",
+            boxShadow: "0px 3px 5px -1px rgba(0,0,0,0.2), 0px 6px 10px 0px rgba(0,0,0,0.14), 0px 1px 18px 0px rgba(0,0,0,0.12)",
+          },
+        },
+      },
+      MuiLinearProgress: {
+        styleOverrides: {
+          root: {
+            borderRadius: m3Shape.full,
+            height: 8,
+            backgroundColor: m3Colors.surface.containerHighest,
+          },
+          bar: {
+            borderRadius: m3Shape.full,
+          },
+        },
+      },
+      MuiCircularProgress: {
+        styleOverrides: {
+          root: {
+            color: m3Colors.primary.main,
+          },
+        },
+      },
+      MuiAlert: {
+        styleOverrides: {
+          root: {
+            borderRadius: m3Shape.medium,
+          },
+          standardError: {
+            backgroundColor: mode === "dark" ? "rgba(186, 26, 26, 0.1)" : "rgba(186, 26, 26, 0.08)",
+            color: m3Colors.error.main,
+          },
+          standardSuccess: {
+            backgroundColor: mode === "dark" ? "rgba(56, 106, 32, 0.1)" : "rgba(56, 106, 32, 0.08)",
+            color: m3Colors.success.main,
+          },
+        },
+      },
+      MuiAvatar: {
+        styleOverrides: {
+          root: {
+            backgroundColor: m3Colors.primary.main,
+            color: m3Colors.primary.contrastText,
+          },
+        },
+      },
+      MuiList: {
+        styleOverrides: {
+          root: {
+            padding: 0,
+          },
+        },
+      },
+      MuiListItem: {
+        styleOverrides: {
+          root: {
+            borderRadius: m3Shape.medium,
+          },
+        },
+      },
+      MuiListItemButton: {
+        styleOverrides: {
+          root: {
+            borderRadius: m3Shape.medium,
+            transition: `all ${m3Motion.duration.short4}ms ${m3Motion.easing.standard}`,
             "&:hover": {
-              backgroundColor: m3Colors.secondary.dark,
+              backgroundColor: m3Colors.surface.containerHigh,
+            },
+          },
+        },
+      },
+      MuiToggleButton: {
+        styleOverrides: {
+          root: {
+            borderRadius: m3Shape.full,
+            textTransform: "none",
+            fontWeight: 500,
+            borderColor: m3Colors.outline.main,
+            "&.Mui-selected": {
+              backgroundColor: m3Colors.secondary.main,
+              color: m3Colors.secondary.contrastText,
+              "&:hover": {
+                backgroundColor: m3Colors.secondary.dark,
+              },
+            },
+          },
+        },
+      },
+      MuiToggleButtonGroup: {
+        styleOverrides: {
+          root: {
+            backgroundColor: m3Colors.surface.container,
+            borderRadius: m3Shape.full,
+            padding: 4,
+            gap: 4,
+          },
+          grouped: {
+            border: 0,
+            "&:not(:first-of-type)": {
+              borderRadius: m3Shape.full,
+              marginLeft: 0,
+            },
+            "&:first-of-type": {
+              borderRadius: m3Shape.full,
             },
           },
         },
       },
     },
-    MuiToggleButtonGroup: {
-      styleOverrides: {
-        root: {
-          backgroundColor: m3Colors.surface.container,
-          borderRadius: m3Shape.full,
-          padding: 4,
-          gap: 4,
-        },
-        grouped: {
-          border: 0,
-          "&:not(:first-of-type)": {
-            borderRadius: m3Shape.full,
-            marginLeft: 0,
-          },
-          "&:first-of-type": {
-            borderRadius: m3Shape.full,
-          },
-        },
-      },
-    },
-  },
-};
+  };
 
-export const theme = createTheme(themeOptions);
+  return createTheme(themeOptions);
+}
 
-// Export M3 tokens for use in custom components
+// Default theme (dark) for backward compatibility
+export const theme = createAppTheme("dark");
+
+// Helper to get M3 tokens for the current mode
+export function getM3Tokens(mode: "light" | "dark") {
+  return {
+    colors: mode === "dark" ? m3DarkColors : m3LightColors,
+    typography: m3Typography,
+    shape: m3Shape,
+    motion: m3Motion,
+  };
+}
+
+// Export M3 tokens (dark by default for backward compatibility)
 export const m3Tokens = {
-  colors: m3Colors,
+  colors: m3DarkColors,
   typography: m3Typography,
   shape: m3Shape,
   motion: m3Motion,

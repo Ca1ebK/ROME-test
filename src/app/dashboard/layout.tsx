@@ -14,7 +14,8 @@ import HomeOutlined from "@mui/icons-material/HomeOutlined";
 import EventNoteOutlined from "@mui/icons-material/EventNoteOutlined";
 import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
 import Logout from "@mui/icons-material/Logout";
-import { m3Tokens } from "@/theme";
+import { useM3Tokens } from "@/hooks/useM3Tokens";
+import { ThemeModeToggle } from "@/components/shared/ThemeModeToggle";
 import { useSession } from "@/hooks/useSession";
 
 export default function DashboardLayout({
@@ -25,6 +26,7 @@ export default function DashboardLayout({
   const router = useRouter();
   const pathname = usePathname();
   const { session, isLoading, logout } = useSession();
+  const m3Tokens = useM3Tokens();
 
   if (isLoading) {
     return (
@@ -93,10 +95,14 @@ export default function DashboardLayout({
           </Typography>
         </Box>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Typography variant="body2" color="text.secondary">
             {session?.workerName}
           </Typography>
+          <ThemeModeToggle
+            size="small"
+            sx={{ color: m3Tokens.colors.onSurface.variant }}
+          />
           <IconButton
             onClick={logout}
             size="small"

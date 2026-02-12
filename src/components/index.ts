@@ -11,6 +11,7 @@
 // Shared Components
 // ============================================
 export { NumericKeypad } from "./shared/NumericKeypad";
+export { ThemeModeToggle } from "./shared/ThemeModeToggle";
 
 // ============================================
 // Kiosk Components

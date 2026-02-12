@@ -12,6 +12,7 @@ import {
   ProductionLog,
   ErrorRetry,
   AddWorker,
+  ThemeModeToggle,
 } from "@/components";
 import {
   authenticateWorker,
@@ -22,7 +23,7 @@ import {
   createWorker,
   type ProductionEntry,
 } from "@/lib/supabase";
-import { m3Tokens } from "@/theme";
+import { useM3Tokens } from "@/hooks/useM3Tokens";
 
 type KioskScreen = "pin" | "actions" | "production" | "error" | "admin";
 
@@ -34,6 +35,8 @@ interface WorkerSession {
 }
 
 export default function KioskPage() {
+  const m3Tokens = useM3Tokens();
+
   // Screen navigation state
   const [screen, setScreen] = useState<KioskScreen>("pin");
 
@@ -302,11 +305,15 @@ export default function KioskPage() {
         sx={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
+          justifyContent: "space-between",
           py: 2,
+          px: 2,
           borderBottom: `1px solid ${m3Tokens.colors.outline.variant}`,
         }}
       >
+        {/* Spacer for symmetry */}
+        <Box sx={{ width: 32 }} />
+
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <Avatar
             sx={{
@@ -334,6 +341,12 @@ export default function KioskPage() {
             </Typography>
           </Box>
         </Box>
+
+        {/* Theme toggle */}
+        <ThemeModeToggle
+          size="small"
+          sx={{ color: m3Tokens.colors.onSurface.variant }}
+        />
       </Box>
 
       {/* Main Content */}

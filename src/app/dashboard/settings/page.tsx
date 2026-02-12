@@ -22,11 +22,16 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import PersonOutlined from "@mui/icons-material/PersonOutlined";
 import MailOutlined from "@mui/icons-material/MailOutlined";
 import PhoneOutlined from "@mui/icons-material/PhoneOutlined";
 import NotificationsOutlined from "@mui/icons-material/NotificationsOutlined";
 import FingerprintOutlined from "@mui/icons-material/FingerprintOutlined";
+import LightModeOutlined from "@mui/icons-material/LightModeOutlined";
+import DarkModeOutlined from "@mui/icons-material/DarkModeOutlined";
+import SettingsBrightnessOutlined from "@mui/icons-material/SettingsBrightnessOutlined";
 import Logout from "@mui/icons-material/Logout";
 import Close from "@mui/icons-material/Close";
 import {
@@ -38,7 +43,8 @@ import {
 } from "@/lib/supabase";
 import { PasskeyManagement } from "@/components";
 import { usePasskey } from "@/hooks/usePasskey";
-import { m3Tokens } from "@/theme";
+import { useM3Tokens } from "@/hooks/useM3Tokens";
+import { useThemeMode, type ThemeModeSetting } from "@/theme";
 
 interface Session {
   workerId: string;
@@ -52,6 +58,8 @@ type ModalType = "email" | "phone" | null;
 export default function SettingsPage() {
   const router = useRouter();
   const { isSupported: passkeysSupported, getPasskeys } = usePasskey();
+  const m3Tokens = useM3Tokens();
+  const { modeSetting, setModeSetting } = useThemeMode();
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<WorkerProfile | null>(null);
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -287,6 +295,54 @@ export default function SettingsPage() {
                 secondaryTypographyProps={{ variant: "caption" }}
               />
             </ListItem>
+          </Card>
+        </Box>
+
+        {/* Appearance Section */}
+        <Box>
+          <Typography
+            variant="overline"
+            sx={{ color: m3Tokens.colors.onSurface.variant, letterSpacing: 1, mb: 1.5, display: "block" }}
+          >
+            Appearance
+          </Typography>
+          <Card>
+            <CardContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <SettingsBrightnessOutlined sx={{ color: m3Tokens.colors.onSurface.variant }} />
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="body1">Theme</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Choose light, dark, or match your system
+                  </Typography>
+                </Box>
+              </Box>
+              <ToggleButtonGroup
+                value={modeSetting}
+                exclusive
+                onChange={(_, value: ThemeModeSetting | null) => {
+                  if (value) setModeSetting(value);
+                }}
+                fullWidth
+                size="small"
+                sx={{
+                  backgroundColor: m3Tokens.colors.surface.containerHigh,
+                }}
+              >
+                <ToggleButton value="light" aria-label="Light mode">
+                  <LightModeOutlined sx={{ mr: 0.75, fontSize: 18 }} />
+                  Light
+                </ToggleButton>
+                <ToggleButton value="system" aria-label="System default">
+                  <SettingsBrightnessOutlined sx={{ mr: 0.75, fontSize: 18 }} />
+                  System
+                </ToggleButton>
+                <ToggleButton value="dark" aria-label="Dark mode">
+                  <DarkModeOutlined sx={{ mr: 0.75, fontSize: 18 }} />
+                  Dark
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </CardContent>
           </Card>
         </Box>
 

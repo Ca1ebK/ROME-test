@@ -19,14 +19,14 @@ import CircularProgress from "@mui/material/CircularProgress";
 import ArrowBack from "@mui/icons-material/ArrowBack";
 import MailOutline from "@mui/icons-material/MailOutline";
 import FingerprintOutlined from "@mui/icons-material/FingerprintOutlined";
-import { NumericKeypad } from "@/components";
+import { NumericKeypad, ThemeModeToggle } from "@/components";
 import { usePasskey } from "@/hooks/usePasskey";
 import {
   authenticateWorkerForDashboard,
   sendVerificationCode,
   verifyCode,
 } from "@/lib/supabase";
-import { m3Tokens } from "@/theme";
+import { useM3Tokens } from "@/hooks/useM3Tokens";
 
 type LoginStep = "pin" | "auth-choice" | "passkey" | "verify";
 
@@ -39,6 +39,7 @@ interface WorkerData {
 
 export default function LoginPage() {
   const router = useRouter();
+  const m3Tokens = useM3Tokens();
   const { isSupported: passkeysSupported, isLoading: isPasskeyLoading, error: passkeyError, register, authenticate, hasPasskeys, clearError } = usePasskey();
 
   // Step state
@@ -358,11 +359,15 @@ export default function LoginPage() {
         sx={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
+          justifyContent: "space-between",
           py: 2,
+          px: 2,
           borderBottom: `1px solid ${m3Tokens.colors.outline.variant}`,
         }}
       >
+        {/* Spacer for symmetry */}
+        <Box sx={{ width: 32 }} />
+
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <Avatar
             sx={{
@@ -393,6 +398,12 @@ export default function LoginPage() {
             </Typography>
           </Box>
         </Box>
+
+        {/* Theme toggle */}
+        <ThemeModeToggle
+          size="small"
+          sx={{ color: m3Tokens.colors.onSurface.variant }}
+        />
       </Box>
 
       {/* Main Content */}
