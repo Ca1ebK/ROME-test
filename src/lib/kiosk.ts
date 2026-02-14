@@ -250,6 +250,51 @@ export async function createWorker(pin: string, fullName: string, role: string =
 }
 
 // ============================================
+// Worker Listing (Manager)
+// ============================================
+
+export interface WorkerListItem {
+  id: string;
+  full_name: string;
+  role: string;
+  is_active: boolean;
+  created_at: string;
+  email?: string | null;
+  phone?: string | null;
+}
+
+export async function getWorkers(): Promise<{ success: boolean; workers: WorkerListItem[]; error?: string }> {
+  const DEMO_MODE = isDemoMode();
+  const supabase = getSupabaseClient();
+
+  if (DEMO_MODE) {
+    await delay(400);
+    const DEMO_WORKERS = getDemoWorkers();
+    const workers: WorkerListItem[] = DEMO_WORKERS.map((w) => ({
+      id: w.id,
+      full_name: w.full_name,
+      role: w.role,
+      is_active: true,
+      created_at: new Date().toISOString(),
+      email: null,
+      phone: null,
+    }));
+    return { success: true, workers };
+  }
+
+  const { data, error } = await supabase!
+    .from("workers")
+    .select("id, full_name, role, is_active, created_at, email, phone")
+    .order("full_name", { ascending: true });
+
+  if (error) {
+    return { success: false, workers: [], error: "Failed to load workers." };
+  }
+
+  return { success: true, workers: data || [] };
+}
+
+// ============================================
 // Production Log Operations
 // ============================================
 

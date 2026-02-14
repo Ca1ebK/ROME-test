@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 export interface Session {
@@ -44,13 +44,20 @@ export function useSession(options: UseSessionOptions = {}): UseSessionReturn {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Stabilize options that may be passed as new references each render
+  const requiredRolesKey = requiredRoles ? requiredRoles.sort().join(",") : "";
+  const optionsRef = useRef({ requiredRoles, roleFailRedirect, loginRedirect });
+  optionsRef.current = { requiredRoles, roleFailRedirect, loginRedirect };
+
   // Check and validate session on mount
   useEffect(() => {
+    const { requiredRoles: roles, roleFailRedirect: roleFail, loginRedirect: loginRedir } = optionsRef.current;
+
     const stored = localStorage.getItem(SESSION_KEY);
 
     // No session - redirect to login
     if (!stored) {
-      router.push(loginRedirect);
+      router.push(loginRedir);
       return;
     }
 
@@ -60,15 +67,15 @@ export function useSession(options: UseSessionOptions = {}): UseSessionReturn {
       // Session expired - clear and redirect
       if (parsed.expiresAt < Date.now()) {
         localStorage.removeItem(SESSION_KEY);
-        router.push(loginRedirect);
+        router.push(loginRedir);
         return;
       }
 
       // Role check if required
-      if (requiredRoles && requiredRoles.length > 0) {
-        const hasRole = requiredRoles.includes(parsed.role || "");
+      if (roles && roles.length > 0) {
+        const hasRole = roles.includes(parsed.role || "");
         if (!hasRole) {
-          router.push(roleFailRedirect);
+          router.push(roleFail);
           return;
         }
       }
@@ -79,9 +86,10 @@ export function useSession(options: UseSessionOptions = {}): UseSessionReturn {
     } catch {
       // Invalid session data - clear and redirect
       localStorage.removeItem(SESSION_KEY);
-      router.push(loginRedirect);
+      router.push(loginRedir);
     }
-  }, [router, requiredRoles, roleFailRedirect, loginRedirect]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router, requiredRolesKey]);
 
   // Logout function
   const logout = useCallback(() => {

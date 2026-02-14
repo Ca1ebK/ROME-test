@@ -12,8 +12,10 @@ import Chip from "@mui/material/Chip";
 import Paper from "@mui/material/Paper";
 import AssignmentOutlined from "@mui/icons-material/AssignmentOutlined";
 import HistoryOutlined from "@mui/icons-material/HistoryOutlined";
+import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
 import Logout from "@mui/icons-material/Logout";
-import { m3Tokens } from "@/theme";
+import { useM3Tokens } from "@/hooks/useM3Tokens";
+import { ThemeModeToggle } from "@/components/shared/ThemeModeToggle";
 import { useSession } from "@/hooks/useSession";
 
 export default function ManagerLayout({
@@ -24,6 +26,8 @@ export default function ManagerLayout({
   const router = useRouter();
   const pathname = usePathname();
   
+  const m3Tokens = useM3Tokens();
+
   // Use session hook with role requirement
   const { session, isLoading, logout } = useSession({
     requiredRoles: ["manager", "supervisor"],
@@ -49,11 +53,13 @@ export default function ManagerLayout({
   const navItems = [
     { href: "/manager", icon: AssignmentOutlined, label: "Pending" },
     { href: "/manager/history", icon: HistoryOutlined, label: "History" },
+    { href: "/manager/workers", icon: PeopleOutlined, label: "Workers" },
   ];
 
   const getNavValue = () => {
     if (pathname === "/manager") return 0;
     if (pathname.startsWith("/manager/history")) return 1;
+    if (pathname.startsWith("/manager/workers")) return 2;
     return 0;
   };
 
@@ -109,6 +115,7 @@ export default function ManagerLayout({
           <Typography variant="body2" color="text.secondary">
             {session?.workerName}
           </Typography>
+          <ThemeModeToggle />
           <IconButton
             onClick={logout}
             size="small"

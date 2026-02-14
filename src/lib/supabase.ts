@@ -33,8 +33,10 @@ export {
   clockIn,
   clockOut,
   createWorker,
+  getWorkers,
   logProduction,
   type ProductionEntry,
+  type WorkerListItem,
 } from "./kiosk";
 
 // ============================================
